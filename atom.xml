@@ -1,0 +1,1058 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>HanWen&#39;s Blog</title>
+  <subtitle>Android Developer</subtitle>
+  <link href="/atom.xml" rel="self"/>
+  
+  <link href="http://zhonghanwen.xyz/"/>
+  <updated>2016-09-11T15:19:20.563Z</updated>
+  <id>http://zhonghanwen.xyz/</id>
+  
+  <author>
+    <name>HanWen</name>
+    
+  </author>
+  
+  <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Android闹钟设置的解决方案</title>
+    <link href="http://zhonghanwen.xyz/2016/07/25/Android%E9%97%B9%E9%92%9F%E8%AE%BE%E7%BD%AE%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/"/>
+    <id>http://zhonghanwen.xyz/2016/07/25/Android闹钟设置的解决方案/</id>
+    <published>2016-07-25T14:10:07.000Z</published>
+    <updated>2016-09-11T15:19:20.563Z</updated>
+    
+    <content type="html">&lt;blockquote&gt;
+&lt;p&gt;Android设置闹钟并不像IOS那样这么简单，做过Android设置闹钟的开发者都知道里面的坑有多深。下面记录一下，我解决Android闹钟设置的解决方案。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/Android_Alcok.jpg&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;
+&lt;h2 id=&quot;主要问题&quot;&gt;&lt;a href=&quot;#主要问题&quot; class=&quot;headerlink&quot; title=&quot;主要问题&quot;&gt;&lt;/a&gt;主要问题&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;API19开始AlarmManager的机制修改。&lt;/li&gt;
+&lt;li&gt;应用程序被Kill掉后,设置的闹钟不响。&lt;/li&gt;
+&lt;li&gt;6.0以上进入Doze模式会使JobScheduler停止工作。&lt;/li&gt;
+&lt;li&gt;手机设置重启后，闹钟失效问题。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&quot;API19以上AlarmManager机制的修改&quot;&gt;&lt;a href=&quot;#API19以上AlarmManager机制的修改&quot; class=&quot;headerlink&quot; title=&quot;API19以上AlarmManager机制的修改&quot;&gt;&lt;/a&gt;API19以上AlarmManager机制的修改&lt;/h3&gt;&lt;p&gt;API19之前AlarmManager提供了三个设置闹钟的方法，由于业务需求闹钟只需要一次性，所以采用set(int type，long startTime，PendingIntent pi)；这个方法。&lt;br&gt;从API 19开始，AlarmManager的机制都是非准确传递，操作系统将会转换闹钟，来最小化唤醒和电池使用。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/blog_20160722145548.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;由于之前的程序，没有对API19以上的闹钟设置做处理，导致在4.4以上的手机设置闹钟无响应（应用程序没有被杀死的情况也没有闹钟）。&lt;/p&gt;
+&lt;p&gt;因些，设置闹钟需要根据API的版本进行分别处理设置。代码如下：&lt;/p&gt;
+&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;AlarmManager am = (AlarmManager) getActivity()&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	   .getSystemService(Context.ALARM_SERVICE);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (Build.VERSION.SDK_INT &amp;gt;= Build.VERSION_CODES.KITKAT) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	am.setExact(AlarmManager.RTC_WAKEUP, TimeUtils&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		.stringToLong(recordTime, TimeUtils.NO_SECOND_FORMAT), sender);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;span class=&quot;keyword&quot;&gt;else&lt;/span&gt; &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	am.set(AlarmManager.RTC_WAKEUP, TimeUtils&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		.stringToLong(recordTime, TimeUtils.NO_SECOND_FORMAT), sender);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;p&gt;这样，保证闹钟在应用程序没有被Kill掉的情况闹钟。&lt;/p&gt;
+&lt;h3 id=&quot;应用程序被Kill掉时的处理&quot;&gt;&lt;a href=&quot;#应用程序被Kill掉时的处理&quot; class=&quot;headerlink&quot; title=&quot;应用程序被Kill掉时的处理&quot;&gt;&lt;/a&gt;应用程序被Kill掉时的处理&lt;/h3&gt;&lt;p&gt;应用程序被Kill掉后，设置的闹钟失效，这里利用守护进程以及灰色保活来保证后台闹钟服务不被Kill掉。当应用程序以及闹钟服务被Kill掉，守护进程以及灰色保活来重新启动闹钟服务，并且重新设置闹钟。&lt;br&gt;关于守护进程的处理，这里采用开源的守护进程库。&lt;a href=&quot;https://github.com/Coolerfall/Android-AppDaemon&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Android-AppDaemon&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;在闹钟服务的onCreat加入Android-AppDaemon这个开源的守护进程。代码如下：&lt;/p&gt;
+&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;onCreate&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;()&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;super&lt;/span&gt;.onCreate();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    Daemon.run(DaemonService.&lt;span class=&quot;keyword&quot;&gt;this&lt;/span&gt;, &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;           DaemonService.class, Daemon.INTERVAL_ONE_MINUTE);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    startTimeTask();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    grayGuard();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;p&gt;为进一步保证闹钟服务的存活，同加上灰色保活（利用系统的漏洞启动前台Service）。&lt;br&gt;代码如下：&lt;/p&gt;
+&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;20&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;21&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;22&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;23&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;24&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;25&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;26&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;27&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;28&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;29&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;30&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;31&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;32&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;33&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;34&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;35&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;36&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;37&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;38&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;39&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;40&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;41&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;42&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;43&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;44&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;45&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;46&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;47&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;48&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;49&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;50&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;51&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;52&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;53&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;54&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;55&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;56&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;grayGuard&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;()&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (Build.VERSION.SDK_INT &amp;lt; &lt;span class=&quot;number&quot;&gt;18&lt;/span&gt;) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&lt;span class=&quot;comment&quot;&gt;//API &amp;lt; 18 ，此方法能有效隐藏Notification上的图标&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		startForeground(GRAY_SERVICE_ID, &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; Notification());&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125; &lt;span class=&quot;keyword&quot;&gt;else&lt;/span&gt; &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		Intent innerIntent = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; Intent(&lt;span class=&quot;keyword&quot;&gt;this&lt;/span&gt;, DaemonInnerService.class);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		startService(innerIntent);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		startForeground(GRAY_SERVICE_ID, &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; Notification());&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;comment&quot;&gt;//发送唤醒广播来促使挂掉的UI进程重新启动起来&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	Intent alarmIntent = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; Intent();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	alarmIntent.setAction(WakeReceiver.GRAY_WAKE_ACTION);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	PendingIntent operation = PendingIntent.getBroadcast(&lt;span class=&quot;keyword&quot;&gt;this&lt;/span&gt;, &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		WAKE_REQUEST_CODE, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (Build.VERSION.SDK_INT &amp;gt;= Build.VERSION_CODES.KITKAT) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		alarmManager.setWindow(AlarmManager.RTC_WAKEUP, &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;			System.currentTimeMillis(), ALARM_INTERVAL, operation);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;span class=&quot;keyword&quot;&gt;else&lt;/span&gt; &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;			System.currentTimeMillis(), ALARM_INTERVAL, operation);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;/**&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; * 给 API &amp;gt;= 18 的平台上用的灰色保活手段&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; */&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;class&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;DaemonInnerService&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;Service&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;onCreate&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;()&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		Log.i(LOG_TAG, &lt;span class=&quot;string&quot;&gt;&quot;InnerService -&amp;gt; onCreate&quot;&lt;/span&gt;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&lt;span class=&quot;keyword&quot;&gt;super&lt;/span&gt;.onCreate();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;onStartCommand&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(Intent intent, &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; flags, &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; startId)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		Log.i(LOG_TAG, &lt;span class=&quot;string&quot;&gt;&quot;InnerService -&amp;gt; onStartCommand&quot;&lt;/span&gt;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		startForeground(GRAY_SERVICE_ID, &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; Notification());&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&lt;span class=&quot;comment&quot;&gt;//stopForeground(true);&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		stopSelf();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;super&lt;/span&gt;.onStartCommand(intent, flags, startId);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; IBinder &lt;span class=&quot;title&quot;&gt;onBind&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(Intent intent)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&lt;span class=&quot;keyword&quot;&gt;throw&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; UnsupportedOperationException(&lt;span class=&quot;string&quot;&gt;&quot;Not yet implemented&quot;&lt;/span&gt;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;onDestroy&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;()&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		Log.i(LOG_TAG, &lt;span class=&quot;string&quot;&gt;&quot;InnerService -&amp;gt; onDestroy&quot;&lt;/span&gt;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&lt;span class=&quot;keyword&quot;&gt;super&lt;/span&gt;.onDestroy();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;p&gt;上面操作尽可能提高闹钟服务的存活。但是在5.0以上的手机，利用系统的自带的Clean功能的时候，还是会将闹钟服务彻底的干掉。为了解决5.0以上的问题，这里引入5.0以上的新特性 JobScheduler。&lt;/p&gt;
+&lt;h3 id=&quot;5-0以上的JobScheduler&quot;&gt;&lt;a href=&quot;#5-0以上的JobScheduler&quot; class=&quot;headerlink&quot; title=&quot;5.0以上的JobScheduler&quot;&gt;&lt;/a&gt;5.0以上的JobScheduler&lt;/h3&gt;&lt;p&gt;关于5.0新增JobScheduler·API可以先阅读这篇文章。&lt;a href=&quot;http://blog.csdn.net/bboyfeiyu/article/details/44809395&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;here&lt;/a&gt;&lt;br&gt;在这里利用5.0以上的JobScheduler创建一个定时的任务，定时检测闹钟服务是否存在，没在存在则重新启动闹钟服务。（这里我设置每一分钟检测一次闹钟服务）&lt;/p&gt;
+&lt;p&gt;在进入应用程序的时候检测当前系统是否是5.0以上，如果是则启动JobScheduler这个服务。代码如下：&lt;br&gt;&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (Build.VERSION.SDK_INT &amp;gt;= Build.VERSION_CODES.LOLLIPOP) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	mJobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	JobInfo.Builder builder = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; JobInfo.Builder(JOB_ID,&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;			&lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; ComponentName(getPackageName(), JobSchedulerService.class.getName()));&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	builder.setPeriodic(&lt;span class=&quot;number&quot;&gt;60&lt;/span&gt; * &lt;span class=&quot;number&quot;&gt;1000&lt;/span&gt;); &lt;span class=&quot;comment&quot;&gt;//每隔60秒运行一次&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	builder.setRequiresCharging(&lt;span class=&quot;keyword&quot;&gt;true&lt;/span&gt;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	builder.setPersisted(&lt;span class=&quot;keyword&quot;&gt;true&lt;/span&gt;);  &lt;span class=&quot;comment&quot;&gt;//设置设备重启后，是否重新执行任务&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	builder.setRequiresDeviceIdle(&lt;span class=&quot;keyword&quot;&gt;true&lt;/span&gt;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (mJobScheduler.schedule(builder.build()) &amp;lt;= &lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&lt;span class=&quot;comment&quot;&gt;//If something goes wrong&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
+&lt;p&gt;其中的builder.setPersisted(true); 方法是设备重启后，是否重新执行任务，在这测过是可以重新启动任务的。&lt;/p&gt;
+&lt;p&gt;上面的操作进一步保证了闹钟服务被Kill掉后，重新启动服务。但是在6.0以上引入了Doze模式，当6.0以上的手机进入这个模式后，便会使JobScheduler停止工作。&lt;/p&gt;
+&lt;h3 id=&quot;6-0以上Doze模式的处理&quot;&gt;&lt;a href=&quot;#6-0以上Doze模式的处理&quot; class=&quot;headerlink&quot; title=&quot;6.0以上Doze模式的处理&quot;&gt;&lt;/a&gt;6.0以上Doze模式的处理&lt;/h3&gt;&lt;p&gt;为了让JobScheduler可以在6.0以上进入Doze模式工作，这里针对6.0以上的Doze模式做特殊的处理-&lt;strong&gt;忽略电池的优化&lt;/strong&gt;。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;在Manifest.xml中加入权限。&lt;br&gt;&lt;code&gt;&amp;lt;uses-permission android:name=&amp;quot;android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS&amp;quot;/&amp;gt;&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;在设置闹钟的时候，判断系统是否是6.0以上，如果是,则判断是否忽略电池的优化。判断是否忽略电池优化代码如下：&lt;/p&gt;
+&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;meta&quot;&gt;@TargetApi&lt;/span&gt;(Build.VERSION_CODES.M)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;boolean&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;isIgnoringBatteryOptimizations&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(Activity activity)&lt;/span&gt;&lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	String packageName = activity.getPackageName();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	PowerManager pm = (PowerManager) activity&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;			.getSystemService(Context.POWER_SERVICE);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (pm.isIgnoringBatteryOptimizations(packageName)) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;true&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;span class=&quot;keyword&quot;&gt;else&lt;/span&gt; &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;false&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;如果没有忽略电池优化的时候，弹出提醒对话框，提示用户进行忽略电池优化操作。代码如下：&lt;/p&gt;
+&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;20&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;21&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;22&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;/**&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; * 针对N以上的Doze模式&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; *&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; * &lt;span class=&quot;doctag&quot;&gt;@param&lt;/span&gt; activity&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt; */&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;isIgnoreBatteryOption&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(Activity activity)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (Build.VERSION.SDK_INT &amp;gt;= Build.VERSION_CODES.M) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&lt;span class=&quot;keyword&quot;&gt;try&lt;/span&gt; &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;			Intent intent = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; Intent();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;			String packageName = activity.getPackageName();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;			PowerManager pm = (PowerManager) activity.getSystemService(Context.POWER_SERVICE);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;			&lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (!pm.isIgnoringBatteryOptimizations(packageName)) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;//               intent.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;				intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;				intent.setData(Uri.parse(&lt;span class=&quot;string&quot;&gt;&quot;package:&quot;&lt;/span&gt; + packageName));&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;				activity.startActivityForResult(intent, REQUEST_IGNORE_BATTERY_CODE);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;			&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&amp;#125; &lt;span class=&quot;keyword&quot;&gt;catch&lt;/span&gt; (Exception e) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;			e.printStackTrace();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;在界面重写onActivityResult方法来捕获用户的选择。如，代码如下：&lt;br&gt;&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;onActivityResult&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; requestCode, &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; resultCode, Intent data)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (resultCode == RESULT_OK) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (requestCode == BatteryUtils.REQUEST_IGNORE_BATTERY_CODE)&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;			&lt;span class=&quot;comment&quot;&gt;//TODO something&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;span class=&quot;keyword&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (resultCode == RESULT_CANCELED)&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (requestCode == BatteryUtils.REQUEST_IGNORE_BATTERY_CODE)&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;			ToastUtils.show(getActivity(), &lt;span class=&quot;string&quot;&gt;&quot;请开启忽略电池优化~&quot;&lt;/span&gt;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
+&lt;h2 id=&quot;补充&quot;&gt;&lt;a href=&quot;#补充&quot; class=&quot;headerlink&quot; title=&quot;补充&quot;&gt;&lt;/a&gt;补充&lt;/h2&gt;&lt;p&gt;当应用程序被Kill掉，但是闹钟的服务没有被Kill掉的，这时候又设置了闹钟。这就意味着设置的闹钟没有放到闹钟服务那里。所以这种情况，设置的闹钟会失效。为了解决这种情况，利用AIDL（闹钟服务在另一个进程的需要进程间通信）调用闹钟服务的重新设置闹钟方法重设闹钟。&lt;/p&gt;
+&lt;p&gt;在应用程序的onCreat()方法启动闹钟服务，然后再绑定闹钟服务。&lt;br&gt;&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;initAlarmService&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;()&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	startService(&lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; Intent(&lt;span class=&quot;keyword&quot;&gt;this&lt;/span&gt;, DaemonService.class));&lt;span class=&quot;comment&quot;&gt;//启动闹钟服务&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (Build.VERSION.SDK_INT &amp;gt;= Build.VERSION_CODES.LOLLIPOP) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	    &lt;span class=&quot;comment&quot;&gt;//JobScheduler&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		...&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;comment&quot;&gt;//绑定闹钟服务&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	Intent intent = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; Intent(&lt;span class=&quot;keyword&quot;&gt;this&lt;/span&gt;, DaemonService.class);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	intent.setAction(&lt;span class=&quot;string&quot;&gt;&quot;android.intent.action.DaemonService&quot;&lt;/span&gt;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	bindService(intent, mConnection, Context.BIND_AUTO_CREATE);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
+&lt;p&gt;在onDestroy()方法，调用闹钟服务的重设闹钟方法。代码如下：&lt;br&gt;&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;20&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;21&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;22&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;23&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;24&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;25&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;onDestroy&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;()&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;keyword&quot;&gt;super&lt;/span&gt;.onDestroy();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;keyword&quot;&gt;try&lt;/span&gt; &amp;#123;&lt;span class=&quot;comment&quot;&gt;//判断是否有闹钟，没有则关闭闹钟服务&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		String alarm = localPreferencesHelper.getString(LocalPreferencesHelper.ALARM_CLOCK);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (daemonService != -&lt;span class=&quot;number&quot;&gt;1&lt;/span&gt; &amp;amp;&amp;amp; mIRemoteService != &lt;span class=&quot;keyword&quot;&gt;null&lt;/span&gt;) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;//                android.os.Process.killProcess(daemonService);&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;			mIRemoteService.resetAlarm();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (!alarm.equals(&lt;span class=&quot;string&quot;&gt;&quot;[]&quot;&lt;/span&gt;)) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;			&lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (daemonService != -&lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;				startService(&lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; Intent(&lt;span class=&quot;keyword&quot;&gt;this&lt;/span&gt;, DaemonService.class));&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;			&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&amp;#125; &lt;span class=&quot;keyword&quot;&gt;else&lt;/span&gt; &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;			&lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (Build.VERSION.SDK_INT &amp;gt;= Build.VERSION_CODES.LOLLIPOP) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;				mJobScheduler.cancel(JOB_ID);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;			&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;		unbindService(mConnection); &lt;span class=&quot;comment&quot;&gt;//解除绑定服务。&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125; &lt;span class=&quot;keyword&quot;&gt;catch&lt;/span&gt; (Exception e) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
+&lt;p&gt;这里说明一下，当服务启动并且被绑定的情况下，unbindService是不会停止服务的。具体可以查看这篇文章。&lt;a href=&quot;http://www.cnblogs.com/newcj/archive/2011/05/30/2061370.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;here&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&quot;最后&quot;&gt;&lt;a href=&quot;#最后&quot; class=&quot;headerlink&quot; title=&quot;最后&quot;&gt;&lt;/a&gt;最后&lt;/h2&gt;&lt;p&gt;以上并不代表所有的Android手机的闹钟都可以用，这只是尽最大的可能保证大部分的手机。&lt;/p&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;Android设置闹钟并不像IOS那样这么简单，做过Android设置闹钟的开发者都知道里面的坑有多深。下面记录一下，我解决Android闹钟设置的解决方案。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/Android_Alcok.jpg&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+    
+    </summary>
+    
+      <category term="技术" scheme="http://zhonghanwen.xyz/categories/%E6%8A%80%E6%9C%AF/"/>
+    
+    
+      <category term="Android" scheme="http://zhonghanwen.xyz/tags/Android/"/>
+    
+      <category term="闹钟" scheme="http://zhonghanwen.xyz/tags/%E9%97%B9%E9%92%9F/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Android Studio代码混淆插件</title>
+    <link href="http://zhonghanwen.xyz/2016/06/15/Android%20Studio%E4%BB%A3%E7%A0%81%E6%B7%B7%E6%B7%86%E6%8F%92%E4%BB%B6/"/>
+    <id>http://zhonghanwen.xyz/2016/06/15/Android Studio代码混淆插件/</id>
+    <published>2016-06-15T01:10:07.000Z</published>
+    <updated>2016-09-11T14:31:13.225Z</updated>
+    
+    <content type="html">&lt;blockquote&gt;
+&lt;p&gt;之前给公司的App添加代码混淆，在代码的混淆过程也遇到了不少的问题，再加上最近学习了一下Android Studio插件的开发，所以就开发一个代码混淆插件方便项目的代码混淆。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;
+&lt;h1 id=&quot;截图&quot;&gt;&lt;a href=&quot;#截图&quot; class=&quot;headerlink&quot; title=&quot;截图&quot;&gt;&lt;/a&gt;截图&lt;/h1&gt;&lt;p&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/androidproguard1.gif&quot; alt=&quot;效果&quot;&gt;&lt;/p&gt;
+&lt;h1 id=&quot;第三方库列表清单&quot;&gt;&lt;a href=&quot;#第三方库列表清单&quot; class=&quot;headerlink&quot; title=&quot;第三方库列表清单&quot;&gt;&lt;/a&gt;第三方库列表清单&lt;/h1&gt;&lt;p&gt;目前插件的后台已集成了如下图的第三方开源库的代码混淆以及基本的代码混淆，还在努力地添加中，也欢迎大家通过new issue提交列表中没有的第三方开源库混淆代码。（你认为微不足道的事情，也许可以帮到别人的大忙~）&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/library_list.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;h1 id=&quot;使用&quot;&gt;&lt;a href=&quot;#使用&quot; class=&quot;headerlink&quot; title=&quot;使用&quot;&gt;&lt;/a&gt;使用&lt;/h1&gt;&lt;ol&gt;
+&lt;li&gt;下载AndroidProGuard插件并安装重启。&lt;a href=&quot;https://raw.githubusercontent.com/zhonghanwen/AndroidProguardPlugin/master/AndroidProguard.zip&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;download&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;在菜单栏的Edit下拉菜单中选择AndroidProGuard选项。&lt;/li&gt;
+&lt;li&gt;如果弹出成功对话框，就可以按Ctrl+V粘贴到项目的proguard-rules.pro文件。&lt;/li&gt;
+&lt;li&gt;根据proguard-rules.pro报错的提示进行修改成。&lt;/li&gt;
+&lt;li&gt;将项目app下gradle文件将minifyEnabled修改成true就可以测试混淆效果。 （你可以使用AndroidKiller反编译看一下效果，AndroidKiller的使用可以参考我写的这篇文章&lt;a href=&quot;http://www.cnblogs.com/common1140/p/5198460.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;here&lt;/a&gt;）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h1 id=&quot;注意&quot;&gt;&lt;a href=&quot;#注意&quot; class=&quot;headerlink&quot; title=&quot;注意&quot;&gt;&lt;/a&gt;&lt;strong&gt;注意&lt;/strong&gt;&lt;/h1&gt;&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;实际的项目通常会有多个的Module，对于多个Module的代码混淆网上资料比较少，经过我实验得出：&lt;strong&gt;对于多个Module的项目，在应用的Module（即app）下的proguard-rules.pro文件添加混淆代码以及在Gradle里minifyEnabled开启即可&lt;/strong&gt;。&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;如果项目在编译的时候报warn信息，那么你可以使用-keep或者-dontwarn保留warn的类。&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h1 id=&quot;最后&quot;&gt;&lt;a href=&quot;#最后&quot; class=&quot;headerlink&quot; title=&quot;最后&quot;&gt;&lt;/a&gt;最后&lt;/h1&gt;&lt;p&gt;我知道项目的代码混淆一般通常混淆一次就可以了，很多人认为这个插件的意义不太，但是我可以告诉你我也是这么想的，可是我也无办法阻止我的行动~哈哈~~&lt;/p&gt;
+&lt;p&gt;项目GitHub地址：&lt;a href=&quot;https://github.com/zhonghanwen/AndroidProguardPlugin&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://github.com/zhonghanwen/AndroidProguardPlugin&lt;/a&gt;&lt;/p&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;之前给公司的App添加代码混淆，在代码的混淆过程也遇到了不少的问题，再加上最近学习了一下Android Studio插件的开发，所以就开发一个代码混淆插件方便项目的代码混淆。&lt;/p&gt;
+&lt;/blockquote&gt;
+    
+    </summary>
+    
+      <category term="技术" scheme="http://zhonghanwen.xyz/categories/%E6%8A%80%E6%9C%AF/"/>
+    
+    
+      <category term="Android" scheme="http://zhonghanwen.xyz/tags/Android/"/>
+    
+      <category term="Android Studio" scheme="http://zhonghanwen.xyz/tags/Android-Studio/"/>
+    
+      <category term="混淆" scheme="http://zhonghanwen.xyz/tags/%E6%B7%B7%E6%B7%86/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Realm Java的学习、应用、总结</title>
+    <link href="http://zhonghanwen.xyz/2016/05/24/Realm%20Java%E7%9A%84%E5%AD%A6%E4%B9%A0%E3%80%81%E5%BA%94%E7%94%A8%E3%80%81%E6%80%BB%E7%BB%93/"/>
+    <id>http://zhonghanwen.xyz/2016/05/24/Realm Java的学习、应用、总结/</id>
+    <published>2016-05-24T00:44:07.000Z</published>
+    <updated>2016-09-11T14:31:13.221Z</updated>
+    
+    <content type="html">&lt;blockquote&gt;
+&lt;p&gt;从React Native珠三角沙龙会议了解到Realm这个开源库，然后开始学习、理解和使用Realm。Realm是跨平台、支持多种主流语言，这里主要是对Realm Java结合实际项目的一些情况进行记录。&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&quot;Realm是什么？&quot;&gt;&lt;a href=&quot;#Realm是什么？&quot; class=&quot;headerlink&quot; title=&quot;Realm是什么？&quot;&gt;&lt;/a&gt;Realm是什么？&lt;/h2&gt;&lt;p&gt;Realm官网：&lt;a href=&quot;https://realm.io/cn/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://realm.io/cn/&lt;/a&gt;&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Realm，为移动设备而生!&lt;strong&gt;替代 SQLite 和 Core Data&lt;/strong&gt;。为你省下数周的时间和数千行的代码，帮你创造出更棒的用户体验。–Realm官网&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;从上面官网的定义，我们大概知道它是一个移动端的数据库。想了解更多到官网，在这里不做过长的介绍。&lt;/p&gt;
+&lt;h2 id=&quot;Realm-Android的性能&quot;&gt;&lt;a href=&quot;#Realm-Android的性能&quot; class=&quot;headerlink&quot; title=&quot;Realm Android的性能&quot;&gt;&lt;/a&gt;Realm Android的性能&lt;/h2&gt;&lt;p&gt;对于Realm Android的性能也是我们比较关注的一个问题，我也是看到Realm的性能比其他数据库要快，所以才去了解以及学习它。下面从官网的三张图片来了解一下它的性能。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;插入操作：在同一个事务里，每秒插入100K条记录（越高代表性能越好）&lt;br&gt;&lt;img src=&quot;https://realm.io/assets/benchmarks-android/benchmarks-android.001.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;统计操作：每秒能在100K条数据中进行查询后count的次数（越高代表性能越好）&lt;br&gt;&lt;img src=&quot;https://realm.io/assets/benchmarks-android/benchmarks-android.002.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;查询操作：在100K中进行一次遍历查询（越高代表性能越好）&lt;br&gt;&lt;img src=&quot;https://realm.io/assets/benchmarks-android/benchmarks-android.003.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Realm不是基于SQLite的ORM，它是基于C++ 存储引擎的。所以，它的速度相当来说比较快的，但是目前它也引发了应用的安装包大小问题。（估计目前他们正在优化这个问题）&lt;br&gt;详细性能内容查看官方的文档：&lt;br&gt;&lt;a href=&quot;https://realm.io/news/realm-for-android/#realm-for-android&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://realm.io/news/realm-for-android/#realm-for-android&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&quot;为什么选择Realm-Java？&quot;&gt;&lt;a href=&quot;#为什么选择Realm-Java？&quot; class=&quot;headerlink&quot; title=&quot;为什么选择Realm Java？&quot;&gt;&lt;/a&gt;为什么选择Realm Java？&lt;/h2&gt;&lt;p&gt;目前在开发应用的IM模块使用到数据库ormlite存储数据。每次打开应用切换到消息列表的时候要等一会才加载出来，从会话点聊天列表加载聊天记录（聊天记录上W条）要转转转转转才出来。看到Realm性能写得好像好厉害的样子，所以尝试运用Realm Java。&lt;br&gt;可能你会问，为什么不选择DBFlow，GreenDAO，ActiveAndroid？&lt;br&gt;DBFlow在创建数据库的时候，数据库名称和版本号都是使用static final修饰变量，而我的应用数据库设计是每个账号对应一个数据库，所以DBFlow在切换数据库的时候，有点力不从心，最张放弃使用DBFlow。而GreenDAO性能上也不错，但是创建Model和数据库升级挺折腾的，总得来说greenDAO投入成本高。（我比较懒~~）,ActiveAndroid没有尝试过，有空可以试一下。&lt;/p&gt;
+&lt;h2 id=&quot;Relam-Java（v0-91-0）目前遇到的一些问题&quot;&gt;&lt;a href=&quot;#Relam-Java（v0-91-0）目前遇到的一些问题&quot; class=&quot;headerlink&quot; title=&quot;Relam Java（v0.91.0）目前遇到的一些问题&quot;&gt;&lt;/a&gt;Relam Java（v0.91.0）目前遇到的一些问题&lt;/h2&gt;&lt;h3 id=&quot;Realm-Java集成&quot;&gt;&lt;a href=&quot;#Realm-Java集成&quot; class=&quot;headerlink&quot; title=&quot;Realm Java集成&quot;&gt;&lt;/a&gt;Realm Java集成&lt;/h3&gt;&lt;p&gt;Realm Java的GitHub地址：&lt;a href=&quot;https://github.com/realm/realm-java&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://github.com/realm/realm-java&lt;/a&gt;&lt;br&gt;个人推荐按照&lt;a href=&quot;https://realm.io/cn/docs/java/latest/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;官网文档&lt;/a&gt;集成Realm Java。因为我之前按照Github中的文档集成Realm Java没有成功，最后按照官网的就可以了。&lt;br&gt;如果你的项目有多个Module的话。如下图，则可以在util的Module加入Realm Java就可以了。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/realm0.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;h3 id=&quot;Realm-数据库文件大小&quot;&gt;&lt;a href=&quot;#Realm-数据库文件大小&quot; class=&quot;headerlink&quot; title=&quot;Realm 数据库文件大小&quot;&gt;&lt;/a&gt;Realm 数据库文件大小&lt;/h3&gt;&lt;p&gt;这里我测试了一下引入Realm Java后apk大小的变化。如下图，可以看到引入后apk足足大了4M。&lt;br&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/realm1.png&quot; alt=&quot;没有引入Realm Java&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/realm3.png&quot; alt=&quot;引入Realm Java&quot;&gt;&lt;br&gt;备注：以下的代码均运行在子线程，这里没有使用Realm异步查询。&lt;/p&gt;
+&lt;h3 id=&quot;不支持自增ID&quot;&gt;&lt;a href=&quot;#不支持自增ID&quot; class=&quot;headerlink&quot; title=&quot;不支持自增ID&quot;&gt;&lt;/a&gt;不支持自增ID&lt;/h3&gt;&lt;p&gt; 在新增数据表的时候，往往定义自增ID，这样做是降低与业务逻辑的耦合。&lt;/p&gt;
+&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;//ormlite可以定义自增id&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;meta&quot;&gt;@DatabaseField&lt;/span&gt;(generatedId = &lt;span class=&quot;keyword&quot;&gt;true&lt;/span&gt;)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; _id;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;//realm java 不支持自增id,这里我使用了UUID来生成,我也没办法了&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;//使用我们项目中已经使用到id.&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; String _id = UUID.randomUUID().toString();&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;h3 id=&quot;不支持limit&quot;&gt;&lt;a href=&quot;#不支持limit&quot; class=&quot;headerlink&quot; title=&quot;不支持limit&quot;&gt;&lt;/a&gt;不支持limit&lt;/h3&gt;&lt;p&gt;场景：每次找出符合条件的20记录并返回。&lt;br&gt;然而，Realm Java没有这样的操作。&lt;br&gt;这个在github中的issue有人提交了。&lt;a href=&quot;https://github.com/realm/realm-java/issues/544&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;here&lt;/a&gt;&lt;br&gt;看下面的代码，我找出所有符合条件的记录，然后根据传入的大小将结果截取并返回。（Y的，如果记录上W条的话，不就很坑吗）&lt;br&gt;&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;realm.beginTransaction();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;String [] orderFiled = &amp;#123;&lt;span class=&quot;string&quot;&gt;&quot;time&quot;&lt;/span&gt;,&lt;span class=&quot;string&quot;&gt;&quot;_id&quot;&lt;/span&gt;&amp;#125;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;Sort [] sorts = &amp;#123;Sort.DESCENDING, Sort.DESCENDING&amp;#125;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;RealmResults&amp;lt;Message&amp;gt; results = realm.where(Message.class)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    .equalTo(&lt;span class=&quot;string&quot;&gt;&quot;sessionType&quot;&lt;/span&gt;,  ModelFileds.SESSION_TYPE_MESSAGE_STRANGER)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    .equalTo(&lt;span class=&quot;string&quot;&gt;&quot;sessionId&quot;&lt;/span&gt;, sessionId)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    .or()&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    .equalTo(&lt;span class=&quot;string&quot;&gt;&quot;sessionType&quot;&lt;/span&gt;, ModelFileds.SESSION_TYPE_MESSAGE_FRIEND)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    .equalTo(&lt;span class=&quot;string&quot;&gt;&quot;sessionId&quot;&lt;/span&gt;, sessionId)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    .findAllSorted(orderFiled, sorts);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;realm.commitTransaction();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; results.subList(&lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;, size);&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
+&lt;h3 id=&quot;update操作&quot;&gt;&lt;a href=&quot;#update操作&quot; class=&quot;headerlink&quot; title=&quot;update操作&quot;&gt;&lt;/a&gt;update操作&lt;/h3&gt;&lt;p&gt;场景：找出符合条件的记录，并对某个字段进行值的修改。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;ormlite使用UpdateBuilder就可以完成这个操作了。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;localSqliteHelper = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; LocalSqliteHelper(mAccount.getUuid());&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;UpdateBuilder&amp;lt;MessageModel, Integer&amp;gt; updateBuilder&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;     = getMessageDao(localSqliteHelper&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;.getWritableDatabase()).updateBuilder();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;updateBuilder.where()&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    .eq(&lt;span class=&quot;string&quot;&gt;&quot;sessionId&quot;&lt;/span&gt;, sessionId).and()&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    .eq(&lt;span class=&quot;string&quot;&gt;&quot;sessionType&quot;&lt;/span&gt;, sessionType).and()&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    .eq(&lt;span class=&quot;string&quot;&gt;&quot;sessionSecondId&quot;&lt;/span&gt;, sessionSecondId).and()&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    .eq(&lt;span class=&quot;string&quot;&gt;&quot;sessionSecondType&quot;&lt;/span&gt;, sessionSecondType).and()&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    .eq(&lt;span class=&quot;string&quot;&gt;&quot;isSend&quot;&lt;/span&gt;, MessageModel.OTHER_TO_ME);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;updateBuilder.updateColumnValue(&lt;span class=&quot;string&quot;&gt;&quot;status&quot;&lt;/span&gt;, &lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; updateBuilder.update();&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;ul&gt;
+&lt;li&gt;Realm Java我只能这样写了。（将符合条件的记录遍历赋值，我也无语了）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;realm.beginTransaction();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;RealmResults&amp;lt;Message&amp;gt; messages = realm.where(Message.class)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        .equalTo(&lt;span class=&quot;string&quot;&gt;&quot;sessionId&quot;&lt;/span&gt;, sessionId)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        .equalTo(&lt;span class=&quot;string&quot;&gt;&quot;sessionType&quot;&lt;/span&gt;, sessionType)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        .equalTo(&lt;span class=&quot;string&quot;&gt;&quot;sessionSecondId&quot;&lt;/span&gt;, sessionSecondId)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        .equalTo(&lt;span class=&quot;string&quot;&gt;&quot;sessionSecondType&quot;&lt;/span&gt;, sessionSecondType)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        .equalTo(&lt;span class=&quot;string&quot;&gt;&quot;isSend&quot;&lt;/span&gt;, MessageModel.OTHER_TO_ME)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        .findAll();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;for&lt;/span&gt; (Message msg : messages)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    msg.status = &lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;realm.copyToRealmOrUpdate(messages);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;realm.commitTransaction();&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;h3 id=&quot;like模糊查询&quot;&gt;&lt;a href=&quot;#like模糊查询&quot; class=&quot;headerlink&quot; title=&quot;like模糊查询&quot;&gt;&lt;/a&gt;like模糊查询&lt;/h3&gt;&lt;p&gt;场景：输入关键字显示匹配关键字的记录。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;ormlite使用like就可以了。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;LocalSqliteHelper localSqliteHelper = &lt;span class=&quot;keyword&quot;&gt;null&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;try&lt;/span&gt; &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    localSqliteHelper = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; LocalSqliteHelper(mAccount.getUuid());&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; getProjectDao(localSqliteHelper.getWritableDatabase())&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            .queryBuilder().orderBy(&lt;span class=&quot;string&quot;&gt;&quot;update_date&quot;&lt;/span&gt;, &lt;span class=&quot;keyword&quot;&gt;false&lt;/span&gt;)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            .where()&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            .like(&lt;span class=&quot;string&quot;&gt;&quot;name&quot;&lt;/span&gt;, &lt;span class=&quot;string&quot;&gt;&quot;%/&quot;&lt;/span&gt; + keyword + &lt;span class=&quot;string&quot;&gt;&quot;/%&quot;&lt;/span&gt;).query();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125; &lt;span class=&quot;keyword&quot;&gt;catch&lt;/span&gt; (SQLException e) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;throw&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; DBException(e);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125; &lt;span class=&quot;keyword&quot;&gt;finally&lt;/span&gt; &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (localSqliteHelper != &lt;span class=&quot;keyword&quot;&gt;null&lt;/span&gt;) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        localSqliteHelper.close();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;ul&gt;
+&lt;li&gt;Realm Java先找出符合条件，然后再判断是否包含关键字。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;realm.beginTransaction();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;RealmResults&amp;lt;Project&amp;gt; results = realm.where(Project.class)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    .findAllSorted(&lt;span class=&quot;string&quot;&gt;&quot;update_date&quot;&lt;/span&gt;, Sort.DESCENDING);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;realm.commitTransaction();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(results != &lt;span class=&quot;keyword&quot;&gt;null&lt;/span&gt; &amp;amp;&amp;amp; results.size() &amp;gt; &lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;)&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;  &lt;span class=&quot;keyword&quot;&gt;for&lt;/span&gt;(&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; i = results.size() -&lt;span class=&quot;number&quot;&gt;1&lt;/span&gt;; i &amp;gt;=&lt;span class=&quot;number&quot;&gt;0&lt;/span&gt;; i--)&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;      &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt;(!results.get(i).name.contains(keyword))&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;          results.remove(i);  &lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;      &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;  &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; results;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;h3 id=&quot;FAQ&quot;&gt;&lt;a href=&quot;#FAQ&quot; class=&quot;headerlink&quot; title=&quot;FAQ&quot;&gt;&lt;/a&gt;FAQ&lt;/h3&gt;&lt;p&gt;更多问题可以看官网的FAQ：&lt;br&gt;&lt;a href=&quot;https://realm.io/cn/docs/java/latest/#faq&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://realm.io/cn/docs/java/latest/#faq&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&quot;stetho-realm工具&quot;&gt;&lt;a href=&quot;#stetho-realm工具&quot; class=&quot;headerlink&quot; title=&quot;stetho-realm工具&quot;&gt;&lt;/a&gt;stetho-realm工具&lt;/h2&gt;&lt;p&gt;如果使用Realm Java，推荐结合&lt;a href=&quot;https://github.com/uPhyca/stetho-realm&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;stetho-realm&lt;/a&gt;工具进行使用。stetho-realm可以查看Realm数据，但是这个工具目前还不支持数据操作。&lt;/p&gt;
+&lt;h2 id=&quot;扩展阅读&quot;&gt;&lt;a href=&quot;#扩展阅读&quot; class=&quot;headerlink&quot; title=&quot;扩展阅读&quot;&gt;&lt;/a&gt;扩展阅读&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;最后，安利大家认真阅读Realm官网发布的文章。文章有一定的技术含金量的喔~文章都有中文翻译的，你再也不用担心看不懂！&lt;/strong&gt;&lt;br&gt;&lt;strong&gt;链接：&lt;/strong&gt;&lt;a href=&quot;https://realm.io/cn/news/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://realm.io/cn/news/&lt;/a&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;blockquote&gt;
+&lt;p&gt;以前我不太明白大神们说的多看&lt;strong&gt;官方文档&lt;/strong&gt;、多看&lt;strong&gt;源码&lt;/strong&gt;这个学习方法，那时候我总种感觉是他们在忽悠我。以前的我当接触到新的技术时，第一反应是百度，而且非常非常非常讨厌看官方文档（干脆就不看了）;现在我总是渴望深入理解它的使用、原理，也慢慢地习惯阅读看官方文档。改变的过程总是不那么容易，需要你的坚持。生活何尝不是需要通过你自己不断地努力去改变呢~&lt;/p&gt;
+&lt;/blockquote&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;从React Native珠三角沙龙会议了解到Realm这个开源库，然后开始学习、理解和使用Realm。Realm是跨平台、支持多种主流语言，这里主要是对Realm Java结合实际项目的一些情况进行记录。&lt;br&gt;
+    
+    </summary>
+    
+      <category term="技术" scheme="http://zhonghanwen.xyz/categories/%E6%8A%80%E6%9C%AF/"/>
+    
+    
+      <category term="Android" scheme="http://zhonghanwen.xyz/tags/Android/"/>
+    
+      <category term="Java" scheme="http://zhonghanwen.xyz/tags/Java/"/>
+    
+      <category term="Realm" scheme="http://zhonghanwen.xyz/tags/Realm/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>手把手教你在Windows下搭建React Native Android开发环境</title>
+    <link href="http://zhonghanwen.xyz/2016/04/17/%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0%E5%9C%A8Windows%E4%B8%8B%E6%90%AD%E5%BB%BAReact%20Native%20Android%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/"/>
+    <id>http://zhonghanwen.xyz/2016/04/17/手把手教你在Windows下搭建React Native Android开发环境/</id>
+    <published>2016-04-17T08:55:07.000Z</published>
+    <updated>2016-04-17T09:19:32.450Z</updated>
+    
+    <content type="html">&lt;blockquote&gt;
+&lt;p&gt;最近看到React Native好像好厉害的样子，好奇心驱使之下体验了一下并将在Window下搭建React Natvie Android环境的步骤记录下来，并有需要的朋友参考。（我都是参考官方文档的）&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;最近看到React Native好像好厉害的样子，好奇心驱使之下体验了一下并将在Window下搭建React Natvie Android环境的步骤记录下来，并有需要的朋友参考。（我都是参考官方文档的）&lt;br&gt;
+    
+    </summary>
+    
+      <category term="技术" scheme="http://zhonghanwen.xyz/categories/%E6%8A%80%E6%9C%AF/"/>
+    
+    
+      <category term="Android" scheme="http://zhonghanwen.xyz/tags/Android/"/>
+    
+      <category term="React Native" scheme="http://zhonghanwen.xyz/tags/React-Native/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>在Windows上将ReactNative集成到现有的Android项目</title>
+    <link href="http://zhonghanwen.xyz/2016/04/12/%E5%9C%A8Windows%E4%B8%8A%E5%B0%86ReactNative%E9%9B%86%E6%88%90%E5%88%B0%E7%8E%B0%E6%9C%89%E7%9A%84Android%E9%A1%B9%E7%9B%AE/"/>
+    <id>http://zhonghanwen.xyz/2016/04/12/在Windows上将ReactNative集成到现有的Android项目/</id>
+    <published>2016-04-12T09:02:07.000Z</published>
+    <updated>2016-04-17T08:30:43.346Z</updated>
+    
+    <content type="html">&lt;blockquote&gt;
+&lt;p&gt;React Natvie的官方文档的 Integrating with Existing Apps 已经很详细地教我们如何将React Natvie集成到现在的Android项目。我根据官方文档的步骤，在Windows上将React Native集成到现有的Android的过程记录下来。&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&quot;集成到Android项目的要求&quot;&gt;&lt;a href=&quot;#集成到Android项目的要求&quot; class=&quot;headerlink&quot; title=&quot;集成到Android项目的要求&quot;&gt;&lt;/a&gt;集成到Android项目的要求&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;一个现有的Android项目&lt;/li&gt;
+&lt;li&gt;搭建好环境（参考上一篇文章：&lt;a href=&quot;http://my.oschina.net/common1140/blog/550501&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://my.oschina.net/common1140/blog/550501&lt;/a&gt;）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;步骤&quot;&gt;&lt;a href=&quot;#步骤&quot; class=&quot;headerlink&quot; title=&quot;步骤&quot;&gt;&lt;/a&gt;步骤&lt;/h3&gt;&lt;p&gt;首先，创建一个Android的项目（这里用来模拟现有的Andorid项目）&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171752047-658416279.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;在现有的Android的build.gradle文件中增加React Natvie的依赖&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171754531-483026874.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;点击&lt;a href=&quot;http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.facebook.react%22%20AND%20a%3A%22react-native%22&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Maven Central&lt;/a&gt; 查看React Natvie的最新版本，这里的最新版本已经是0.18.0了。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171755890-1125021108.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;在build.gradle文件中加入 compile ‘com.facebook.react:react-native:0.18.+’。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171758547-1959655106.png&quot; alt=&quot;&quot;&gt; &lt;/p&gt;
+&lt;p&gt;在AndroidManifest.xml加入访问网络的权限&lt;br&gt;&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&amp;lt;uses-permission android:name=&lt;span class=&quot;string&quot;&gt;&quot;android.permission.INTERNET&quot;&lt;/span&gt; /&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171800687-592968185.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;将下面的代码复制到项目中（记得在AndroidManifest.xml注册该类）&lt;br&gt;&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;20&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;21&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;22&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;23&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;24&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;25&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;26&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;27&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;28&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;29&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;30&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;31&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;32&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;33&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;34&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;35&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;36&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;37&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;38&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;39&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;40&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;41&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;42&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;43&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;44&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;45&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;46&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;47&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;48&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;49&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;50&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;51&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;52&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;53&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;54&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;55&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;56&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;57&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;58&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;59&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;60&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;61&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;62&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;63&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;64&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;65&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;66&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;67&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;68&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;69&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;70&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;71&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;class&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;MyReactActivity&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;Activity&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;implements&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;DefaultHardwareBackBtnHandler&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;launch&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(Activity activity)&lt;/span&gt;&lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        Intent intent = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; Intent(activity, MyReactActivity.class);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        activity.startActivity(intent);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;private&lt;/span&gt; ReactRootView mReactRootView;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;private&lt;/span&gt; ReactInstanceManager mReactInstanceManager;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;onCreate&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(Bundle savedInstanceState)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;super&lt;/span&gt;.onCreate(savedInstanceState);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        mReactRootView = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; ReactRootView(&lt;span class=&quot;keyword&quot;&gt;this&lt;/span&gt;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        mReactInstanceManager = ReactInstanceManager.builder()&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                .setApplication(getApplication())&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                .setBundleAssetName(&lt;span class=&quot;string&quot;&gt;&quot;index.android.bundle&quot;&lt;/span&gt;)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                .setJSMainModuleName(&lt;span class=&quot;string&quot;&gt;&quot;index.android&quot;&lt;/span&gt;)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                .addPackage(&lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; MainReactPackage())&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                .setUseDeveloperSupport(BuildConfig.DEBUG)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                .setInitialLifecycleState(LifecycleState.RESUMED)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                .build();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        mReactRootView.startReactApplication(mReactInstanceManager, &lt;span class=&quot;string&quot;&gt;&quot;MyAwesomeApp&quot;&lt;/span&gt;, &lt;span class=&quot;keyword&quot;&gt;null&lt;/span&gt;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        setContentView(mReactRootView);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;onResume&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;()&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;super&lt;/span&gt;.onResume();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (mReactInstanceManager != &lt;span class=&quot;keyword&quot;&gt;null&lt;/span&gt;) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            mReactInstanceManager.onResume(&lt;span class=&quot;keyword&quot;&gt;this&lt;/span&gt;, &lt;span class=&quot;keyword&quot;&gt;this&lt;/span&gt;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;protected&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;onPause&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;()&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;super&lt;/span&gt;.onPause();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (mReactInstanceManager != &lt;span class=&quot;keyword&quot;&gt;null&lt;/span&gt;) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            mReactInstanceManager.onPause();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;invokeDefaultOnBackPressed&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;()&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;super&lt;/span&gt;.onBackPressed();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;onBackPressed&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;()&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (mReactInstanceManager != &lt;span class=&quot;keyword&quot;&gt;null&lt;/span&gt;) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            mReactInstanceManager.onBackPressed();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#125; &lt;span class=&quot;keyword&quot;&gt;else&lt;/span&gt; &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            &lt;span class=&quot;keyword&quot;&gt;super&lt;/span&gt;.onBackPressed();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;boolean&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;onKeyUp&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; keyCode, KeyEvent event)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (keyCode == KeyEvent.KEYCODE_MENU &amp;amp;&amp;amp; mReactInstanceManager != &lt;span class=&quot;keyword&quot;&gt;null&lt;/span&gt;) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            mReactInstanceManager.showDevOptionsDialog();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;true&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;super&lt;/span&gt;.onKeyUp(keyCode, event);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;接下来，就要将JS增加到现有的项目&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171803765-1902291321.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;在项目的根目录打开命令行(切换到根目录，按住Shift，右击就会出现‘在此处打开命令窗口’)&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171805031-1990673256.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;输入npm init，居然弹这些玩意出来（靠），一开始我以为出错了，后来是才知道是填东西的（生成package.json这个文件的）机智的我在name那里输入了括号后面的文字，弹出下面的错误（不能够大写的），然后将括号的文字全部输入小写就可以了。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171806797-1310109094.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;基本按括号后面的提示填就可以了，最后就在项目的根目录生成package.json这个文件。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171809468-467173090.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;最后提示Is this ok? 输入yes&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171811843-287561133.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;然后，输入&lt;code&gt;npm install --save react-native&lt;/code&gt; ,这里需要等待……&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171816406-1364455773.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;下载完了&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171819468-37666662.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;接下来，输入curl -o .flowconfig &lt;a href=&quot;https://raw.githubusercontent.com/facebook/react-native/master/.flowconfig&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://raw.githubusercontent.com/facebook/react-native/master/.flowconfig&lt;/a&gt;&lt;br&gt;回车居然弹出curl不是内部命令。（百度一查curl是Linux系统的小工具的用来下载文件的，Windows没有这个工具）&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171820359-325955322.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;这里我们分析一下这个命令的作用。从&lt;a href=&quot;https://raw.githubusercontent.com/facebook/react-native/master/.flowconfig下载文件并且文件名为.flowconfig。&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://raw.githubusercontent.com/facebook/react-native/master/.flowconfig下载文件并且文件名为.flowconfig。&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171822093-7550902.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;那我们就用其他的下载工具下载这个文件放到根目录不就可以了吗。（不用执行上面那个命令）&lt;br&gt;这里我用360极速浏览器新建下载任务将链接复制到下载任务那里。（记住文件为.flowconfig）&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171824390-1744218347.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;下载后放到根目录下&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171826672-1928057532.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;可能有人会问不能从其他的项目.flowconfig复制过来么？理论上是可以的，左边是其他项目的，右边是刚下载，在文件的最下面可以看出版本不一样了。所以建议下载最新.flowconfig文件。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171829875-417345532.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;接着，输入react-native start启动服务，发现报错了（package.json解析不了)。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171831828-180864216.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;打开package.json将test这行删掉，然后保存。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171835078-1070673376.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;再运行react-native start，可以看到服务已启动，端口为8081。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171837359-986802363.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;在浏览器输入地址：&lt;a href=&quot;http://localhost:8081/index.android.bundle?platform=android&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://localhost:8081/index.android.bundle?platform=android&lt;/a&gt;&lt;br&gt;如果可以打开，则证明服务无问题了。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171839765-2074511005.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;最后输入gradlew installDebug命令运行项目。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171840875-863938362.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;我的现有项目的minSdkVersion为15,而react natvie的0.18.0版本需要minSdkVersion为16.这里将minSdkVersion修改为16后再运行。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171841953-933264023.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;编译成功了。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171847656-1550802541.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;（如果用真机调试可以先阅读上一篇文章）&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201601/595381-20160120171903922-434579779.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;React Natvie的官方文档的 Integrating with Existing Apps 已经很详细地教我们如何将React Natvie集成到现在的Android项目。我根据官方文档的步骤，在Windows上将React Native集成到现有的Android的过程记录下来。&lt;br&gt;
+    
+    </summary>
+    
+      <category term="技术" scheme="http://zhonghanwen.xyz/categories/%E6%8A%80%E6%9C%AF/"/>
+    
+    
+      <category term="Android" scheme="http://zhonghanwen.xyz/tags/Android/"/>
+    
+      <category term="React Native" scheme="http://zhonghanwen.xyz/tags/React-Native/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Android热修复实践应用--AndFix</title>
+    <link href="http://zhonghanwen.xyz/2016/03/17/Android%E7%83%AD%E4%BF%AE%E5%A4%8D%E5%AE%9E%E8%B7%B5--AndFix/"/>
+    <id>http://zhonghanwen.xyz/2016/03/17/Android热修复实践--AndFix/</id>
+    <published>2016-03-17T01:41:07.000Z</published>
+    <updated>2016-04-17T08:30:43.346Z</updated>
+    
+    <content type="html">&lt;blockquote&gt;
+&lt;p&gt;一直关注App的热修复的技术发展，之前做的应用也没用使用到什么热修复开源框架。在App的热修复框架没有流行之前，做的应用上线后发现一个小小的Bug，就要马上发一个新的版本。我亲身经历过一周发两个版本，真的折腾用户的节奏~~所以，要开始考虑引入热修复。下面记录使用开源框架阿里巴巴的AndFix过程。&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&quot;实现的原理&quot;&gt;&lt;a href=&quot;#实现的原理&quot; class=&quot;headerlink&quot; title=&quot;实现的原理&quot;&gt;&lt;/a&gt;实现的原理&lt;/h3&gt;&lt;p&gt;这里说的不是热修复怎么实现修bug的原理，这里说的是怎么使用AndFix。如果你想了解更多的andFix实现原理，你可以参考下面的文章：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://github.com/alibaba/AndFix&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://github.com/alibaba/AndFix&lt;/a&gt; （AndFix的官网）&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;http://blog.csdn.net/lmj623565791/article/details/49883661&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://blog.csdn.net/lmj623565791/article/details/49883661&lt;/a&gt; （Android大神鸿洋的Bolg文章）&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;## &lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;应用启动的时候，在 onCreate() 方法中获取友盟的在线参数来判断当前的应用版本是否有补丁需要下载，有则通过ThinDonloadManager来下载到SD下并且通过使用AndFix来加载到应用中。&lt;/li&gt;
+&lt;li&gt;使用极光推送消息到该应用的版本需要下载补丁，如果应用收到了消息后，应用判断当前的版本是否需要下载补丁。如果应用没有收到消息的通知，则下次启动App的时候，获取友盟在线参数来判断是否需要下载补丁。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&quot;步骤&quot;&gt;&lt;a href=&quot;#步骤&quot; class=&quot;headerlink&quot; title=&quot;步骤&quot;&gt;&lt;/a&gt;步骤&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;在gradle文件中增加相应的依赖。这里我使用thindownlaodmanager来下载补丁，使用极光推送来推送自定义消息下载补丁通知，使用友盟在线参数来获取补丁包的信息。也许你会问为了修复一个补丁而增加这么多的依赖，值得吗？我认为还可以吧，因为我的项目一般会使用到这些。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_1.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;AndFix的引入是：&lt;/p&gt;
+&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;compile &lt;span class=&quot;string&quot;&gt;&#39;com.alipay.euler:andfix:0.3.1@aar&#39;&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;导入AndFix的so库文件以及极光推送的so库文件;&lt;br&gt;&lt;br&gt;极光推送集成参考文档:&lt;a href=&quot;http://docs.jpush.io/client/android_sdk/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://docs.jpush.io/client/android_sdk/&lt;/a&gt;&lt;br&gt;&lt;br&gt;&lt;font color=&quot;red&quot;&gt;注意：&lt;/font&gt;导入AndFix的so文件时，可以先阅读这下个：&lt;a href=&quot;https://github.com/zhonghanwen/AndFix-Ndk-Build-ADT&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://github.com/zhonghanwen/AndFix-Ndk-Build-ADT&lt;/a&gt;&lt;br&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_2.png&quot; alt=&quot;&quot;&gt;&lt;br&gt;&lt;br&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;接着，集成友盟在线参数&lt;br&gt;&lt;br&gt;参考官方文档:&lt;a href=&quot;http://dev.umeng.com/online-parameters/android-doc/intergration&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://dev.umeng.com/online-parameters/android-doc/intergration&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;配置友盟在线参数的参数以及推光推送自定义的内容&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;友盟在线参数&lt;br&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/umneg_online.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;极光推送自定义消息(自定义消息有长度限制，所以补丁的下载url写成拼接形式：站点+下载资源名称)&lt;br&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/jpush.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;定义相对应的Bean&lt;br&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_3.png&quot; alt=&quot;&quot;&gt; &lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;在启动的自定义Application类进行初始化工作(AndFix、极光的初始化)&lt;br&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_4.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;在程序的入口类进行友盟补丁的检测：&lt;/p&gt;
+&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;getUmengParamAndFix&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;()&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;comment&quot;&gt;//获取友盟在线参数对应key的values&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    String pathInfo = OnlineConfigAgent.getInstance().getConfigParams(&lt;span class=&quot;keyword&quot;&gt;this&lt;/span&gt;, UMENG_ONLINE_PARAM);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (!TextUtils.isEmpty(pathInfo))&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        PatchBean onLineBean = GsonUtils.getInstance().parseIfNull(PatchBean.class , pathInfo);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;try&lt;/span&gt; &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            &lt;span class=&quot;comment&quot;&gt;//进行判断当前版本是否有补丁需要下载更新&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            RepairBugUtil.getInstance().comparePath(&lt;span class=&quot;keyword&quot;&gt;this&lt;/span&gt;, onLineBean);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#125; &lt;span class=&quot;keyword&quot;&gt;catch&lt;/span&gt; (Exception e) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            e.printStackTrace();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;再加上推送推送的自定义内容的处理：（当推送消息过来的时候应用处于运行状态的时候，程序会处理消息进行下载补丁包）&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;20&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;21&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;22&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;23&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;24&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;25&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;26&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;27&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;28&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;29&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;30&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;31&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;32&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;33&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;34&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;35&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;36&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;37&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;38&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;39&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;40&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;41&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;42&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;43&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;44&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;45&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;private&lt;/span&gt; WeakHandler mHandler = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; WeakHandler(&lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; Handler.Callback() &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;boolean&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;handleMessage&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(Message msg)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	    &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (msg.what == MSG_WHAT_DOWNLOAD)&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	        String message = (String) msg.obj;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	        &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (TextUtils.isEmpty(message)) &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;false&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	        &lt;span class=&quot;keyword&quot;&gt;try&lt;/span&gt; &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	            PatchBean bean = GsonUtils.getInstance().parse(PatchBean.class, message);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	            RepairBugUtil.getInstance().comparePath(MainActivity.&lt;span class=&quot;keyword&quot;&gt;this&lt;/span&gt;, bean);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	        &amp;#125; &lt;span class=&quot;keyword&quot;&gt;catch&lt;/span&gt; (Exception e) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	            e.printStackTrace();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	        &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	    &lt;span class=&quot;keyword&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;false&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;comment&quot;&gt;//for receive customer msg from jpush server&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;keyword&quot;&gt;private&lt;/span&gt; MessageReceiver mMessageReceiver;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;final&lt;/span&gt; String MESSAGE_RECEIVED_ACTION = &lt;span class=&quot;string&quot;&gt;&quot;com.zhw.andfix.MESSAGE_RECEIVED_ACTION&quot;&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;final&lt;/span&gt; String KEY_MESSAGE = &lt;span class=&quot;string&quot;&gt;&quot;message&quot;&lt;/span&gt;;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;registerMessageReceiver&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;()&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	mMessageReceiver = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; MessageReceiver();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	IntentFilter filter = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; IntentFilter();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	filter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	filter.addAction(MESSAGE_RECEIVED_ACTION);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	registerReceiver(mMessageReceiver, filter);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;class&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;MessageReceiver&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;extends&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;BroadcastReceiver&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;onReceive&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(Context context, Intent intent)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	    &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (MESSAGE_RECEIVED_ACTION.equals(intent.getAction())) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	        String message = intent.getStringExtra(KEY_MESSAGE);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	        Message msg = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; Message();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	        msg.what = MSG_WHAT_DOWNLOAD;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	        msg.obj = message;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	        mHandler.sendMessage(msg);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;	&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;补丁包的生成&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;下载AndFix的补丁生成工具：&lt;a href=&quot;https://github.com/alibaba/AndFix/raw/master/tools/apkpatch-1.0.3.zip&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;here&lt;/a&gt; &lt;/li&gt;
+&lt;li&gt;生成补丁的文件需要的文件有：原apk文件，修复Bug后生成的新apk，签名文件。&lt;br&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_5.png&quot; alt=&quot;&quot;&gt;&lt;/li&gt;
+&lt;li&gt;在解压apkpatch工具的目录下，打开命令行输入以下命令生成补丁包。&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;apkpatch -m &amp;lt;apatch_path...&amp;gt; -o &amp;lt;output&amp;gt; -k &amp;lt;keystore&amp;gt; -p &amp;lt;***&amp;gt; -a &amp;lt;alias&amp;gt; -e &amp;lt;***&amp;gt;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_6.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;将生成的补丁放到指定服务器上。（这里我放到了七牛上）&lt;br&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_7.png&quot; alt=&quot;&quot;&gt;&lt;br&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_8.png&quot; alt=&quot;&quot;&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;自己测试一下成不成啦~&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&quot;代码&quot;&gt;&lt;a href=&quot;#代码&quot; class=&quot;headerlink&quot; title=&quot;代码&quot;&gt;&lt;/a&gt;代码&lt;/h3&gt;&lt;p&gt;通过ThinDownloadManager下载补丁包，下载成功后使用AndFix加载补丁包的方法：&lt;br&gt;&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;20&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;21&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;22&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;23&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;24&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;25&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;26&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;27&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;28&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;29&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;30&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;31&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;32&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;33&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;34&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;35&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;36&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;37&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;38&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;39&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;40&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;41&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;42&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;43&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;44&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;45&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;46&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;47&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;48&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;49&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;50&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;51&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;52&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;   &lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;downloadAndLoad&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(Context context, &lt;span class=&quot;keyword&quot;&gt;final&lt;/span&gt; PatchBean bean, String downloadUrl)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;       &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (mLocalPreferencesHelper == &lt;span class=&quot;keyword&quot;&gt;null&lt;/span&gt;) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;           mLocalPreferencesHelper = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; LocalPreferencesHelper(context, SPConst.SP_NAME);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;       &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;       Uri downloadUri = Uri.parse(downloadUrl);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;       Uri destinationUri = Uri.parse(Environment.getExternalStorageDirectory()&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;               .getAbsolutePath() + bean.url);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;       DownloadRequest downloadRequest = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; DownloadRequest(downloadUri)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;               .setDestinationURI(destinationUri)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;               .setPriority(DownloadRequest.Priority.HIGH)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;               .setDownloadListener(&lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; DownloadStatusListener() &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                   &lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                   &lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;onDownloadComplete&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; id)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                       &lt;span class=&quot;comment&quot;&gt;// add patch at runtime&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                       &lt;span class=&quot;keyword&quot;&gt;try&lt;/span&gt; &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                           &lt;span class=&quot;comment&quot;&gt;// .apatch file path&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                           String patchFileString = Environment.getExternalStorageDirectory()&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                                   .getAbsolutePath() + bean.url;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                           BaseApplication.mPatchManager.addPatch(patchFileString);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                           Log.d(TAG, &lt;span class=&quot;string&quot;&gt;&quot;apatch:&quot;&lt;/span&gt; + patchFileString + &lt;span class=&quot;string&quot;&gt;&quot; added.&quot;&lt;/span&gt;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                           &lt;span class=&quot;comment&quot;&gt;//复制且加载补丁成功后，删除下载的补丁&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                           File f = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; File(patchFileString);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                           &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (f.exists()) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                               &lt;span class=&quot;keyword&quot;&gt;boolean&lt;/span&gt; result = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; File(patchFileString).delete();&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                               &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (!result)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                                   Log.e(TAG, patchFileString + &lt;span class=&quot;string&quot;&gt;&quot; delete fail&quot;&lt;/span&gt;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                           &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;//                            mLocalPreferencesHelper.saveOrUpdate(SPConst.IsHavePathDownLoad, false);&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                       &amp;#125; &lt;span class=&quot;keyword&quot;&gt;catch&lt;/span&gt; (IOException e) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                           Log.e(TAG, &lt;span class=&quot;string&quot;&gt;&quot;&quot;&lt;/span&gt;, e);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                       &amp;#125; &lt;span class=&quot;keyword&quot;&gt;catch&lt;/span&gt; (Throwable throwable) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                       &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                   &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                   &lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                   &lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;onDownloadFailed&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; id, &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; errorCode, String errorMessage)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                       &lt;span class=&quot;comment&quot;&gt;//下载失败的时候，标注标记位，等下次重新打开应用的时候重新下载&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;comment&quot;&gt;//                        mLocalPreferencesHelper.saveOrUpdate(SPConst.IsHavePathDownLoad, true);&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                       Log.e(TAG, &lt;span class=&quot;string&quot;&gt;&quot;onDownloadFailed&quot;&lt;/span&gt;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                   &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                   &lt;span class=&quot;meta&quot;&gt;@Override&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                   &lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;onProgress&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(&lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; id, &lt;span class=&quot;keyword&quot;&gt;long&lt;/span&gt; totalBytes, &lt;span class=&quot;keyword&quot;&gt;int&lt;/span&gt; progress)&lt;/span&gt; &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                       Log.e(TAG, &lt;span class=&quot;string&quot;&gt;&quot;progress:&quot;&lt;/span&gt; + progress);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                   &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;               &amp;#125;);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;       mDownloadManager = &lt;span class=&quot;keyword&quot;&gt;new&lt;/span&gt; ThinDownloadManager(THREAD_COUNT);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;       mDownloadManager.add(downloadRequest);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;   &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
+&lt;p&gt;判断是否有补丁包需要下载的方法：&lt;br&gt;&lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;5&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;6&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;7&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;8&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;9&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;10&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;11&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;12&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;13&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;14&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;15&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;16&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;17&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;18&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;19&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;20&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;21&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;22&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;function&quot;&gt;&lt;span class=&quot;keyword&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;title&quot;&gt;comparePath&lt;/span&gt;&lt;span class=&quot;params&quot;&gt;(Context context, PatchBean RemoteBean)&lt;/span&gt; &lt;span class=&quot;keyword&quot;&gt;throws&lt;/span&gt; Exception &lt;/span&gt;&amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    String pathInfo = mLocalPreferencesHelper.getString(SPConst.PATH_INFO);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;final&lt;/span&gt; PatchBean localBean = GsonUtils.getInstance().parseIfNull(PatchBean.class, pathInfo);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;comment&quot;&gt;//远程的应用版本跟当前应用的版本比较&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (BaseApplication.VERSION_NAME.equals(RemoteBean.app_v)) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;comment&quot;&gt;//远程的应用版本跟本地保存的应用版本一样，但补丁不一样，则需要下载重新&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;comment&quot;&gt;/**&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;         *第一种情况：当本地记录的Bean为空的时候（刚安装的时候可能为空）并且远程的Bean的path_v不为空的时候需要下载补丁。&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;         * 第二种情况：当本地记录的path_v和远程Bean的path_v不一样的时候需要下载补丁。&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;         */&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &lt;span class=&quot;keyword&quot;&gt;if&lt;/span&gt; (localBean == &lt;span class=&quot;keyword&quot;&gt;null&lt;/span&gt; &amp;amp;&amp;amp; !TextUtils.isEmpty(RemoteBean.path_v)&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                || localBean.app_v.equals(RemoteBean.app_v) &amp;amp;&amp;amp;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                !localBean.path_v.equals(RemoteBean.path_v)) &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            downloadAndLoad(context, RemoteBean,&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;                    SPConst.URL_PREFIX + RemoteBean.url);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            String json = GsonUtils.getInstance().parse(RemoteBean);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            mLocalPreferencesHelper.saveOrUpdate(SPConst.PATH_INFO, json);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#125; &lt;span class=&quot;comment&quot;&gt;/*else &amp;#123;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;            mLocalPreferencesHelper.saveOrUpdate(SPConst.IsHavePathDownLoad, false);&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;        &amp;#125;*/&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;    &amp;#125;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;&lt;/p&gt;
+&lt;h3 id=&quot;附&quot;&gt;&lt;a href=&quot;#附&quot; class=&quot;headerlink&quot; title=&quot;附&quot;&gt;&lt;/a&gt;附&lt;/h3&gt;&lt;p&gt;项目GitHub地址：&lt;a href=&quot;https://github.com/zhonghanwen/AndFix-Bad-Practices&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://github.com/zhonghanwen/AndFix-Bad-Practices&lt;/a&gt;&lt;/p&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;一直关注App的热修复的技术发展，之前做的应用也没用使用到什么热修复开源框架。在App的热修复框架没有流行之前，做的应用上线后发现一个小小的Bug，就要马上发一个新的版本。我亲身经历过一周发两个版本，真的折腾用户的节奏~~所以，要开始考虑引入热修复。下面记录使用开源框架阿里巴巴的AndFix过程。&lt;br&gt;
+    
+    </summary>
+    
+      <category term="技术" scheme="http://zhonghanwen.xyz/categories/%E6%8A%80%E6%9C%AF/"/>
+    
+    
+      <category term="Android" scheme="http://zhonghanwen.xyz/tags/Android/"/>
+    
+      <category term="热修复" scheme="http://zhonghanwen.xyz/tags/%E7%83%AD%E4%BF%AE%E5%A4%8D/"/>
+    
+      <category term="java" scheme="http://zhonghanwen.xyz/tags/java/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Android反编译工具的使用-Android Killer</title>
+    <link href="http://zhonghanwen.xyz/2016/03/12/Android%E5%8F%8D%E7%BC%96%E8%AF%91%E5%B7%A5%E5%85%B7%E7%9A%84%E4%BD%BF%E7%94%A8-Android%20Killer/"/>
+    <id>http://zhonghanwen.xyz/2016/03/12/Android反编译工具的使用-Android Killer/</id>
+    <published>2016-03-12T07:13:07.000Z</published>
+    <updated>2016-09-11T14:31:13.215Z</updated>
+    
+    <content type="html">&lt;blockquote&gt;
+&lt;p&gt;今天百度搜索“Android反编译”搜索出来的结果大多数都是比较传统的教程。刚接触反编译的时候，我也是从这些教程慢慢学起的。在后来的学习过程中，我接触到比较方便操作的Android反编译。在这，我将使用的过程写下来，贡献给有需的朋友，为国内Android的事业作出一点点贡献。&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h3 id=&quot;首先&quot;&gt;&lt;a href=&quot;#首先&quot; class=&quot;headerlink&quot; title=&quot;首先&quot;&gt;&lt;/a&gt;首先&lt;/h3&gt;&lt;p&gt;我们先看一Android界有名的大神写关于Android反编译的博客：&lt;/p&gt;
+&lt;p&gt;（郭大侠）&lt;a href=&quot;http://blog.csdn.net/guolin_blog/article/details/49738023&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://blog.csdn.net/guolin_blog/article/details/49738023&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;（鸿洋大神）&lt;a href=&quot;http://blog.csdn.net/lmj623565791/article/details/23564065&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://blog.csdn.net/lmj623565791/article/details/23564065&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;（主席大神）&lt;a href=&quot;http://blog.csdn.net/singwhatiwanna/article/details/18797493&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://blog.csdn.net/singwhatiwanna/article/details/18797493&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;…&lt;/p&gt;
+&lt;p&gt;我推荐大家使用的Android反编译的软件是Android Killer。（这启动界面Cool爆了）&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201602/595381-20160218155702175-24262021.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;其实这个软件就是对以上博客提到的操作进行一系列的封装。打开这个软件你就可以发现这些熟悉的反编译工具。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201602/595381-20160218155704331-521929252.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;h3 id=&quot;接着&quot;&gt;&lt;a href=&quot;#接着&quot; class=&quot;headerlink&quot; title=&quot;接着&quot;&gt;&lt;/a&gt;接着&lt;/h3&gt;&lt;p&gt;打开待反编译的apk。（在这示范反编译美柚）&lt;/p&gt;
+&lt;p&gt;软件清晰地展示了美柚的信息。（是反编译的不错选择）&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201602/595381-20160218155706019-613378113.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;切换到工程管理器，可以查看反编译的资源和smail代码等。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201602/595381-20160218155710331-933140431.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201602/595381-20160218155714394-1904720055.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201602/595381-20160218155718878-71681245.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;h3 id=&quot;接下来&quot;&gt;&lt;a href=&quot;#接下来&quot; class=&quot;headerlink&quot; title=&quot;接下来&quot;&gt;&lt;/a&gt;接下来&lt;/h3&gt;&lt;p&gt;查看smali代码，找到你需要查看的文件，点击下图的这个图标&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201602/595381-20160218155722894-322935268.png&quot; alt=&quot;&quot;&gt; &lt;/p&gt;
+&lt;p&gt;看到熟悉的界面了吧。。。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201602/595381-20160218155725988-492419434.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;——————————–接下来我们修改apk,然后重新打包–不要干坏事—————————–&lt;/p&gt;
+&lt;p&gt;下面演示修改一个apk的名称&lt;/p&gt;
+&lt;p&gt;切换到工程搜索，输入app_name，点击下面搜索到的内容，修改为美柚a。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201602/595381-20160218155729081-1644378794.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;接下来，编译打包。&lt;/p&gt;
+&lt;p&gt;切换到Android，点击编译。菜单栏还有好多关于Android功能。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201602/595381-20160218155734144-1608504056.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;从日志输出的信息可以看到，已经编译打包好了。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201602/595381-20160218155736456-91002307.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;最后，我们安装编译好的apk。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201602/595381-20160218155741253-1372747929.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;这软件还有好多功能，在这不一一列出了，有兴趣的朋友自己慢慢摸索。&lt;/p&gt;
+&lt;p&gt;在些，我不是在为这个软件做广告，只是推荐大家使用。&lt;/p&gt;
+&lt;p&gt;最后，软件的下载链接：&lt;a href=&quot;http://pan.baidu.com/s/1o7lfgfg&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://pan.baidu.com/s/1o7lfgfg&lt;/a&gt;。&lt;/p&gt;
+&lt;p&gt;也可以自己百度下载。&lt;/p&gt;
+&lt;hr&gt;
+&lt;h3 id=&quot;2016-7-16-更新&quot;&gt;&lt;a href=&quot;#2016-7-16-更新&quot; class=&quot;headerlink&quot; title=&quot;2016/7/16 更新&quot;&gt;&lt;/a&gt;2016/7/16 更新&lt;/h3&gt;&lt;p&gt;现在的App越来越大，一般都会有多个Dex文件。在使用Android Killer的查看源码过程中，你可能会遇到在samail_class2、sameil_class3目录下点击反编译源码时报未找到对应的源码这种情况，如下图。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/blog_androidkiller_problem.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;以上这个问题，我已经发邮件给软件的制作者，但是还没有得到回应。这个问题是软件没有将其他的classX.dex转成对应classesX-dex2jar,所以找不相对应的源码。&lt;/p&gt;
+&lt;p&gt;为了可以查看完整的源代码，这里手动将其他的classX的转化对应classes2-dex2jar并放置到Android Killer对应的目录。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;利用解压软件将apk里面除了classes.dex的其他claseesX.dex提取出来，将放到Android Killer的bin/dex2jar的目录下，如下图。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/bolg_android_killer_201607161338.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;在bin/dex2jar目录下打开命令行，执行&lt;code&gt;d2j-dex2jar.bat classesX.dex&lt;/code&gt; (classesX.dex中X对应你的dex名称)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/bolg_android_killer_201607161346.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;最后，将生成的包复制到Android Killerr的projects/你反编译的apk名/ProjectSrc目录下，如下图。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;img src=&quot;http://7xrnko.com1.z0.glb.clouddn.com/bolg_android_killer_201607161349.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;今天百度搜索“Android反编译”搜索出来的结果大多数都是比较传统的教程。刚接触反编译的时候，我也是从这些教程慢慢学起的。在后来的学习过程中，我接触到比较方便操作的Android反编译。在这，我将使用的过程写下来，贡献给有需的朋友，为国内Android的事业作出一点点贡献。&lt;br&gt;
+    
+    </summary>
+    
+      <category term="技术" scheme="http://zhonghanwen.xyz/categories/%E6%8A%80%E6%9C%AF/"/>
+    
+    
+      <category term="Android" scheme="http://zhonghanwen.xyz/tags/Android/"/>
+    
+      <category term="反编译" scheme="http://zhonghanwen.xyz/tags/%E5%8F%8D%E7%BC%96%E8%AF%91/"/>
+    
+      <category term="逆向工程" scheme="http://zhonghanwen.xyz/tags/%E9%80%86%E5%90%91%E5%B7%A5%E7%A8%8B/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>2015年度个人总结和计划</title>
+    <link href="http://zhonghanwen.xyz/2016/03/12/2015%E5%B9%B4%E5%BA%A6%E4%B8%AA%E4%BA%BA%E6%80%BB%E7%BB%93%E5%92%8C%E8%AE%A1%E5%88%92/"/>
+    <id>http://zhonghanwen.xyz/2016/03/12/2015年度个人总结和计划/</id>
+    <published>2016-03-12T07:07:07.000Z</published>
+    <updated>2016-04-17T08:30:43.330Z</updated>
+    
+    <content type="html">&lt;p&gt;　　　逝者如斯夫，不舍昼夜！转眼间，自己在XX网里参加工作已经有一年有余了。回首即将逝去的2015年，可以说是平淡而不普通的一年，发现自己在各方面都比上一年有所进步、提高。一年的结束孕育着新一年的到来，新的一年意味着新的起点、新的挑战。昂首期待未来，总结以往经验。在新一年来临之际，我现把这一年的工作总结一下以及将新一年计划列一下。&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;&lt;br&gt;　　大概3月份左右，XXXX App第一期基本开发完成比较稳定的版本。在此之前，我主要负责参考XXXX App的Android客户端的开发工作。XXXX第一期开发的难度系数相对比较低，开发起来还是相对的容易，所学到的基础知识基本上可以开发出来。我个人认为当时的开发效率还是比较低的，这里说的是整个项目的开发效率，不是个人负责工作的完成效率，换句话来说是团队的整体开发效率不高，没有达到高效。这个也许是团队协调与沟通交流还存在不足的地方。XXXX App实际上基本可以满足用户的使用（表面），但是项目的代码管理（本质）比较杂乱、扩展性差、健壮性也不错、兼容性也不算好。这无疑导致开发的工作量大大的增加。产生这些问题的原因有团队的项目开发经验缺乏，有自己个人的开发水平有限、技能不足。简言之，我的专业技能还不够强。&lt;/p&gt;
+&lt;p&gt;　　在3月份之前，公司聘请了外包团队与我们的团队一起开发问答App。公司的目的培训公司的团队，让我们学习外包团队的技能。在外包团队的参与和指导下问答App开发工作相当顺利，团队的分工清晰、交流充分、协调都比较好。问答App的工作接近尾声，意味着XXX 的重构工作要紧张的展开。XXX App的重构外包团队主要负责聊天模块和其他协调工作，剩下的工作由我们的团队负责。&lt;/p&gt;
+&lt;p&gt;　　XXX 的开发难度系数相当来说还是有点高的。在参与XXX 的开发过程中，让我增了好多的知识、经验、专业技能，让我明白了要不断地提高自身的能力，让我找到了自己的学习的方式，让我明白了团队的协作的重要性。总得来说，我的各方面都有所进步了。&lt;/p&gt;
+&lt;p&gt;　　接下来，我说一下我的工作计划和个人的成长计划。我的工作主要是负责XXX 的开发。所以我的工作计划主要围绕XXX App展开：第一，积极主动修复发现XXX 的漏洞，主动参与XXX 的后期的版本的迭代、更新以及维护。第二，优化XXX App的即时通信模块，提高XXX App的高并发性，增加更好的动画效果，以提高App的体验性。第三，协调好跨部门的交流讨论相关XXX 的开发方案。第四，做好编码的规范以及做好代码的注释工作，增加代码的健壮性。新的一年，我的个人成长计划是Android学习路线：如何成长为高级工程师。所以要做到以下几点：第一，拼命学习，拼命提高自己的技术实力，使自己的能力变强。第二，1.  平时在公司认真做项目，积极主动，一切以学知识为目标，多做项目。同时学习公司内部的高级工程师、架构师写的代码，加以理解变成自己的东西。第三，努力，逼着自己去学习。&lt;/p&gt;
+&lt;p&gt;　　这年，我的思想得到了进一步地开拓、内心的构建更加牢固，工作的态度也得到更深层次的升华，工作状态也发生了根的变化。在新的一年，我要更加地努力让自己变得更加优秀，为公司创造出更多、更大的价值，希望能为公司今后的发展做出一份不可磨灭的贡献！！！加油~~~&lt;/p&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;　　　逝者如斯夫，不舍昼夜！转眼间，自己在XX网里参加工作已经有一年有余了。回首即将逝去的2015年，可以说是平淡而不普通的一年，发现自己在各方面都比上一年有所进步、提高。一年的结束孕育着新一年的到来，新的一年意味着新的起点、新的挑战。昂首期待未来，总结以往经验。在新一年来临之际，我现把这一年的工作总结一下以及将新一年计划列一下。&lt;br&gt;
+    
+    </summary>
+    
+      <category term="职场" scheme="http://zhonghanwen.xyz/categories/%E8%81%8C%E5%9C%BA/"/>
+    
+    
+      <category term="工作" scheme="http://zhonghanwen.xyz/tags/%E5%B7%A5%E4%BD%9C/"/>
+    
+      <category term="总结" scheme="http://zhonghanwen.xyz/tags/%E6%80%BB%E7%BB%93/"/>
+    
+      <category term="计划" scheme="http://zhonghanwen.xyz/tags/%E8%AE%A1%E5%88%92/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Android开发遇到的坑：Java中List的安全删除问题</title>
+    <link href="http://zhonghanwen.xyz/2016/03/09/Android%E5%BC%80%E5%8F%91%E9%81%87%E5%88%B0%E7%9A%84%E5%9D%91%EF%BC%9AJava%E4%B8%ADList%E7%9A%84%E5%AE%89%E5%85%A8%E5%88%A0%E9%99%A4%E9%97%AE%E9%A2%98/"/>
+    <id>http://zhonghanwen.xyz/2016/03/09/Android开发遇到的坑：Java中List的安全删除问题/</id>
+    <published>2016-03-09T09:45:07.000Z</published>
+    <updated>2016-04-17T08:30:43.314Z</updated>
+    
+    <content type="html">&lt;blockquote&gt;
+&lt;p&gt;  在项目的开发过程中，一定少不了的是对Java集合中的List接触。项目中对List的删掉也是一种常见的操作，看上这个操作也没什么好说的样子，但是在项目开发中也是最容易出错的地方，特别是对于新手。有时候，我们在开发的时候不注意也会踩进这个坑。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;下面的代码看上去好像问题，但是运行报IndexOutOfBoundsException。&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;&lt;br&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201511/595381-20151104162105992-1682547161.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;看控制台输出的打印出来的信息，我们知道List的Size发生了变化，但是Index的没有改变，当Index起出Size的大小时，就报IndexOutOfBoundsException。&lt;/p&gt;
+&lt;p&gt;下面这种情况还坑，比较难一眼看出来，因为它没有报IndexOutOfBoundsException异常，删除后不是你想要的List结果。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201511/595381-20151104162115852-250040882.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;运行程序没有报错，但是输出的结果不是想要的，是不是很坑。分析一下原因：List中的数据的位置发生了变化，如下图的右边为删除后的List数据的位置.&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201511/595381-20151104162119227-732161100.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;对于上面的坑，总的来说就是List的发生了变化，但是判断条件没有做出调整，所以导致以上的问题。&lt;/p&gt;
+&lt;font color=&quot;red&quot;&gt;那么，可以安全的删除List的方法可能有好多， 但是当我遇到List的删除的时候，我用以下这种就可以了。&lt;/font&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201511/595381-20151104162129524-1417991993.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;这种方法是从列表的后面开始删掉。&lt;/p&gt;
+&lt;p&gt;网上可能还有比较多的方法来安全的删除，但是这种在我开发项目时候遇到List的删掉已经够用了！&lt;/p&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;  在项目的开发过程中，一定少不了的是对Java集合中的List接触。项目中对List的删掉也是一种常见的操作，看上这个操作也没什么好说的样子，但是在项目开发中也是最容易出错的地方，特别是对于新手。有时候，我们在开发的时候不注意也会踩进这个坑。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;下面的代码看上去好像问题，但是运行报IndexOutOfBoundsException。&lt;br&gt;
+    
+    </summary>
+    
+      <category term="技术" scheme="http://zhonghanwen.xyz/categories/%E6%8A%80%E6%9C%AF/"/>
+    
+    
+      <category term="Android" scheme="http://zhonghanwen.xyz/tags/Android/"/>
+    
+      <category term="Java" scheme="http://zhonghanwen.xyz/tags/Java/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Android Stduio统计项目的代码行数</title>
+    <link href="http://zhonghanwen.xyz/2016/03/09/Android%20Stduio%E7%BB%9F%E8%AE%A1%E9%A1%B9%E7%9B%AE%E7%9A%84%E4%BB%A3%E7%A0%81%E8%A1%8C%E6%95%B0/"/>
+    <id>http://zhonghanwen.xyz/2016/03/09/Android Stduio统计项目的代码行数/</id>
+    <published>2016-03-09T09:40:07.000Z</published>
+    <updated>2016-04-17T08:30:43.314Z</updated>
+    
+    <content type="html">&lt;p&gt;android studio统计项目的代码行数的步骤如下：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;按住Ctrl+Shift+A，在弹出的框输入‘find’,然后选择Find in Path.(或者使用快捷键Ctrl+Shift+F)&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;
+&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201512/595381-20151203104156018-569376102.png&quot; alt=&quot;&quot;&gt;&lt;br&gt;&lt;p&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;在弹出Find in Path的框中的Text to find输入\n,接着勾选Regular expression(正则表达式)，Context选择anywhere，&lt;br&gt;Scope根据你想要统计的范围进行选择，File mask选择*.java。（在这里统计项目的Java的代码行数）&lt;br&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201512/595381-20151203104157674-136374303.png&quot; alt=&quot;&quot;&gt;&lt;br&gt;&lt;p&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;下图的Useages in generated code是自动生成的代码，上面那个就是项目的代码行数。&lt;br&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201512/595381-20151203104158924-407673909.png&quot; alt=&quot;&quot;&gt;&lt;/li&gt;
+&lt;/ol&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;android studio统计项目的代码行数的步骤如下：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;按住Ctrl+Shift+A，在弹出的框输入‘find’,然后选择Find in Path.(或者使用快捷键Ctrl+Shift+F)
+    
+    </summary>
+    
+      <category term="技术" scheme="http://zhonghanwen.xyz/categories/%E6%8A%80%E6%9C%AF/"/>
+    
+    
+      <category term="Android" scheme="http://zhonghanwen.xyz/tags/Android/"/>
+    
+      <category term="Java" scheme="http://zhonghanwen.xyz/tags/Java/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Android Studio修改项目的包名</title>
+    <link href="http://zhonghanwen.xyz/2016/03/09/Android%20Studio%E4%BF%AE%E6%94%B9%E9%A1%B9%E7%9B%AE%E7%9A%84%E5%8C%85%E5%90%8D/"/>
+    <id>http://zhonghanwen.xyz/2016/03/09/Android Studio修改项目的包名/</id>
+    <published>2016-03-09T09:31:07.000Z</published>
+    <updated>2016-04-17T08:30:43.314Z</updated>
+    
+    <content type="html">&lt;blockquote&gt;
+&lt;p&gt;android studio的修改包名，没有有Eclipse环境中那么好操作。也可能你对Eclipse的操作比较熟悉，对Andoid Studio的操作还不太熟悉。在项目的开发中，你可能遇到需要更改模块的包名或者是项目的包名。下面记录了一些在Android Studio环境下修改包名。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;通常的项目的默认的显示方式都是如下图所示的结构的。Android Studio默认设置了隐藏掉空的包名的。&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;&lt;br&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201509/595381-20150910174504559-581508312.png&quot; alt=&quot;项目结构图&quot;&gt;&lt;/p&gt;
+&lt;h4 id=&quot;首先&quot;&gt;&lt;a href=&quot;#首先&quot; class=&quot;headerlink&quot; title=&quot;首先&quot;&gt;&lt;/a&gt;首先&lt;/h4&gt;&lt;p&gt;在修改包名前，我们需要设置显示空的包名的内容。如下图，右击设置的图标，在弹出的菜单栏中取消勾选Comact Empty Middle Packages。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201509/595381-20150910174519169-749901531.png&quot; alt=&quot;image&quot;&gt;&lt;/p&gt;
+&lt;p&gt;操作后项目的结构会变成如下图：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201509/595381-20150910174527247-1784589957.png&quot; alt=&quot;image&quot;&gt;&lt;/p&gt;
+&lt;h4 id=&quot;接着&quot;&gt;&lt;a href=&quot;#接着&quot; class=&quot;headerlink&quot; title=&quot;接着&quot;&gt;&lt;/a&gt;接着&lt;/h4&gt;&lt;p&gt;为了更加好的理解，我将项目的结构显示成树形的项目结构。（这个设置根据个人喜好，有些人不喜欢树形结构）&lt;/p&gt;
+&lt;p&gt;如下图，设置成树形的显示结构：&lt;/p&gt;
+&lt;p&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; 右击设置的图标，在弹出的菜单栏中取消勾选Flatten Packages&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201509/595381-20150910174540247-956866233.png&quot; alt=&quot;image&quot;&gt;&lt;/p&gt;
+&lt;p&gt;下图就是树形结构显示&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201509/595381-20150910174548450-368780739.png&quot; alt=&quot;image&quot;&gt;&lt;/p&gt;
+&lt;p&gt;第一种情况：将viewgroup修改成view.group(就是group在view包下面)&lt;/p&gt;
+&lt;p&gt;你可能在viewgroup包下进行重命名包名。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201509/595381-20150910174605669-296059900.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;然后，在弹出框中在vewgorup中间加上点号。但是实践告诉我们这样是不行的。AS不支持。&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201509/595381-20150910174607825-518667972.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;以下的操作可以达到我们要求：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201509/595381-20150910174616856-986974459.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201509/595381-20150910174629778-1077958239.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201509/595381-20150910174644778-1814722643.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201509/595381-20150910174647965-1738339212.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201509/595381-20150910174655669-674952311.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201509/595381-20150910174709700-1909361002.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201509/595381-20150910174721028-1183696157.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;第二种情况：将group包去掉&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201509/595381-20150910174728997-1775335513.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+&lt;p&gt;那么，我们可以按上面的原理直接将demo包移动到view包下，然后将group包删掉即可。&lt;/p&gt;
+&lt;p&gt;（可以选中demo包长按鼠标左击，将它拖到view,这时会弹出移动的弹框，确定即可）&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images2015.cnblogs.com/blog/595381/201509/595381-20150910174731215-2134824242.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;android studio的修改包名，没有有Eclipse环境中那么好操作。也可能你对Eclipse的操作比较熟悉，对Andoid Studio的操作还不太熟悉。在项目的开发中，你可能遇到需要更改模块的包名或者是项目的包名。下面记录了一些在Android Studio环境下修改包名。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;通常的项目的默认的显示方式都是如下图所示的结构的。Android Studio默认设置了隐藏掉空的包名的。&lt;br&gt;
+    
+    </summary>
+    
+      <category term="技术" scheme="http://zhonghanwen.xyz/categories/%E6%8A%80%E6%9C%AF/"/>
+    
+    
+      <category term="Android" scheme="http://zhonghanwen.xyz/tags/Android/"/>
+    
+      <category term="Android Studio" scheme="http://zhonghanwen.xyz/tags/Android-Studio/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>类似IOS的滑动返回上一级，SwipeBackLayout-android的滑动返回类库</title>
+    <link href="http://zhonghanwen.xyz/2016/03/09/%E7%B1%BB%E4%BC%BCIOS%E7%9A%84%E6%BB%91%E5%8A%A8%E8%BF%94%E5%9B%9E%E4%B8%8A%E4%B8%80%E7%BA%A7%EF%BC%8CSwipeBackLayout-android%E7%9A%84%E6%BB%91%E5%8A%A8%E8%BF%94%E5%9B%9E%E7%B1%BB%E5%BA%93/"/>
+    <id>http://zhonghanwen.xyz/2016/03/09/类似IOS的滑动返回上一级，SwipeBackLayout-android的滑动返回类库/</id>
+    <published>2016-03-09T09:07:07.000Z</published>
+    <updated>2016-04-17T08:30:43.330Z</updated>
+    
+    <content type="html">&lt;blockquote&gt;
+&lt;p&gt;最近，公司在开发App的需求中增加了一个新的需求，要在android的页面中增加向右滑动的时候返回上一级页面。我刚知道这个需求的时候，感觉有点坑，可能设计那边最近接触到知乎的客户端或者是IOS的滑动可以返回上一级的效果，所以。。。&lt;br&gt;之前没有接触过android的滑动返回的开源库，所以还是找一下百度。。。&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;&lt;br&gt;后来在Github上找到了SwipeBackLayout；GitHub地址是：&lt;a href=&quot;https://github.com/ikew0ng/SwipeBackLayout&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://github.com/ikew0ng/SwipeBackLayout&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2 id=&quot;介绍&quot;&gt;&lt;a href=&quot;#介绍&quot; class=&quot;headerlink&quot; title=&quot;介绍&quot;&gt;&lt;/a&gt;介绍&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;首先，我们先看一下这个开源项目，不要着急地开始使用，先认真看一下项目。&lt;br&gt;&lt;img src=&quot;http://images0.cnblogs.com/blog/595381/201507/171508367209335.png&quot; alt=&quot;image&quot;&gt;&lt;/p&gt;
+&lt;font color=&quot;#B22222&quot;&gt;项目的要求：要使用这个开源的类库就要将最新的V4包引入到你的项目中&lt;/font&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;接着，我们看一下怎么使用它。看项目的文档（有些人不喜欢官方的文档，这样很容易出各种问题）&lt;br&gt;&lt;img src=&quot;http://images0.cnblogs.com/blog/595381/201507/171508397202819.png&quot; alt=&quot;image&quot;&gt;&lt;/p&gt;
+&lt;h2 id=&quot;使用&quot;&gt;&lt;a href=&quot;#使用&quot; class=&quot;headerlink&quot; title=&quot;使用&quot;&gt;&lt;/a&gt;使用&lt;/h2&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;将SwipeBackLayout类库引入到你的项目中，这个你可以选择引入项目类库的源码或者如果你使用Android Studio开发那就在Gradle中添加以下引用：&lt;br&gt;&lt;img src=&quot;http://images0.cnblogs.com/blog/595381/201507/171508425323359.png&quot; alt=&quot;image&quot;&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;在你要使用的滑动返回上一级的页面的Activity类继承SwipeBackActivity；然后在onCreate方法中的setContentView()中使用，接着调用getSwipeBackLayout()方法来获取SwipeBackLayout，接着你还可以设置滑动的方向。刚开始我以为这样就完全了，但是跑起来滑动的时候，发现下面的页面是黑屏的。感觉怪怪的。。。&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;/p&gt;&lt;br&gt;后来一看文档发现少了最后一步。 &lt;p&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;在项目Res-&amp;gt;values-&amp;gt;styles中的以下增加这句：&lt;br&gt; &lt;code&gt;&amp;lt;item name=&amp;quot;android:windowIsTranslucent&amp;quot;&amp;gt;true&amp;lt;/item&amp;gt;&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src=&quot;http://images0.cnblogs.com/blog/595381/201507/171508445167785.png&quot; alt=&quot;image&quot;&gt;&lt;/p&gt;
+&lt;p&gt;最后，你的项目就接入了SwipeBackLayout…&lt;/p&gt;
+&lt;p&gt;备注：如果出现返回黑屏或者是返回出现桌面的，请参考以下的博客:&lt;br&gt;&lt;a href=&quot;http://www.cnblogs.com/taoweiji/p/4590883.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://www.cnblogs.com/taoweiji/p/4590883.html&lt;/a&gt;&lt;/p&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;最近，公司在开发App的需求中增加了一个新的需求，要在android的页面中增加向右滑动的时候返回上一级页面。我刚知道这个需求的时候，感觉有点坑，可能设计那边最近接触到知乎的客户端或者是IOS的滑动可以返回上一级的效果，所以。。。&lt;br&gt;之前没有接触过android的滑动返回的开源库，所以还是找一下百度。。。&lt;br&gt;
+    
+    </summary>
+    
+      <category term="技术" scheme="http://zhonghanwen.xyz/categories/%E6%8A%80%E6%9C%AF/"/>
+    
+    
+      <category term="Android" scheme="http://zhonghanwen.xyz/tags/Android/"/>
+    
+      <category term="android" scheme="http://zhonghanwen.xyz/tags/android/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Android测试框架初步</title>
+    <link href="http://zhonghanwen.xyz/2016/03/09/Android%E6%B5%8B%E8%AF%95%E6%A1%86%E6%9E%B6%E5%88%9D%E6%AD%A5/"/>
+    <id>http://zhonghanwen.xyz/2016/03/09/Android测试框架初步/</id>
+    <published>2016-03-09T08:38:52.000Z</published>
+    <updated>2016-04-17T08:30:43.314Z</updated>
+    
+    <content type="html">&lt;h3 id=&quot;一、实验目的&quot;&gt;&lt;a href=&quot;#一、实验目的&quot; class=&quot;headerlink&quot; title=&quot;一、实验目的&quot;&gt;&lt;/a&gt;一、实验目的&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;掌握android测试项目的建立&lt;/li&gt;
+&lt;li&gt;掌握android测试框架的基本内容&lt;/li&gt;
+&lt;li&gt;编写运行android测试&lt;/li&gt;
+&lt;/ol&gt;
+&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;
+&lt;h3 id=&quot;二、实验内容与步骤&quot;&gt;&lt;a href=&quot;#二、实验内容与步骤&quot; class=&quot;headerlink&quot; title=&quot;二、实验内容与步骤&quot;&gt;&lt;/a&gt;二、实验内容与步骤&lt;/h3&gt;&lt;p&gt;建立android项目MyProject，运行截图如下：&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;http://images.cnitblog.com/blog/595381/201410/190000448885869.jpg&quot; alt=&quot;image&quot;&gt;&lt;/p&gt;
+&lt;p&gt;点击ok按钮，EditText内字母变大写&lt;/p&gt;
+&lt;p&gt;点击超链接，打开浏览器上网&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;请用知识对本项目进行测试，要求：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;对组件进行对齐测试（assertOnScreen和assertRightAligned方法）&lt;/li&gt;
+&lt;li&gt;对EditText进行传值测试（使用sendKeys 和 sendRepeatedKeys两种方法）&lt;/li&gt;
+&lt;li&gt;对Button进行功能测试（performClick和sendKeys方法）&lt;/li&gt;
+&lt;li&gt;对超链接进行测试（ActivityMonitor内部类）&lt;/li&gt;
+&lt;li&gt;为了保证测试的完整性和准确性，请适当添加必要的功能（如先决条件，多种方法等）&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;注：建立android测试项目过程如下&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;新建android测试项目&lt;br&gt;&lt;img src=&quot;http://images.cnitblog.com/blog/595381/201410/190011229196481.jpg&quot; alt=&quot;image&quot;&gt;&lt;br&gt;&lt;img src=&quot;http://images.cnitblog.com/blog/595381/201410/190010079519150.jpg&quot; alt=&quot;image&quot;&gt;&lt;br&gt;&lt;img src=&quot;http://images.cnitblog.com/blog/595381/201410/190013136851441.jpg&quot; alt=&quot;image&quot;&gt;&lt;br&gt;&lt;img src=&quot;http://images.cnitblog.com/blog/595381/201410/190014086854971.jpg&quot; alt=&quot;image&quot;&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;建立好测试项目之后，在测试项目中的src目录下，右键点击你创建的包，依次选择新建—&amp;gt;JUnit Test Case，弹出如下界面：&lt;br&gt;&lt;img src=&quot;http://images.cnitblog.com/blog/595381/201410/190017356543575.jpg&quot; alt=&quot;image&quot;&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;img src=&quot;http://images.cnitblog.com/blog/595381/201410/190023079828613.jpg&quot; alt=&quot;image&quot;&gt;&lt;/p&gt;
+&lt;p&gt;//代码&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;package com.sise.zhw;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.view.View;
+import android.view.View.OnClickListener;    
+import android.widget.Button;
+import android.widget.EditText;
+
+public class MyProjectActivity extends Activity {
+    /** Called when the activity is first created. */
+    private EditText mMessage;
+    private Button mok;
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        mMessage=(EditText)findViewById(R.id.message);
+        mok=(Button)findViewById(R.id.ok);
+        mok.setOnClickListener(new OnClickListener()
+        {
+
+            public void onClick(View v)
+            {
+                // TODO Auto-generated method stub
+                mMessage.setText(mMessage.getText().
+                        toString().toUpperCase());
+            }
+        });
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;//布局文件&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;&amp;lt;?xml version=&amp;quot;1.0&amp;quot; encoding=&amp;quot;utf-8&amp;quot;?&amp;gt;
+&amp;lt;LinearLayout xmlns:android=&amp;quot;http://schemas.android.com/apk/res/android&amp;quot;
+    android:layout_width=&amp;quot;fill_parent&amp;quot;
+    android:layout_height=&amp;quot;fill_parent&amp;quot;
+    android:orientation=&amp;quot;vertical&amp;quot; &amp;gt;
+&amp;lt;ImageView
+    android:layout_width=&amp;quot;wrap_content&amp;quot;
+    android:id=&amp;quot;@+id/imageView1&amp;quot;
+    android:layout_height=&amp;quot;wrap_content&amp;quot;
+    android:src=&amp;quot;@drawable/ic_launcher&amp;quot;
+    android:layout_marginBottom=&amp;quot;6dip&amp;quot;
+    android:layout_gravity=&amp;quot;center_horizontal&amp;quot;
+    android:layout_marginTop=&amp;quot;20dip&amp;quot;
+    /&amp;gt;
+&amp;lt;TextView
+    android:layout_width=&amp;quot;wrap_content&amp;quot;
+    android:layout_height=&amp;quot;wrap_content&amp;quot;
+    android:text=&amp;quot;MyFirstProjectTest&amp;quot;
+    android:layout_gravity=&amp;quot;center&amp;quot;
+    /&amp;gt;
+&amp;lt;TextView
+    android:layout_width=&amp;quot;wrap_content&amp;quot;
+    android:layout_height=&amp;quot;wrap_content&amp;quot;
+    android:text=&amp;quot;www.sise.com.cn&amp;quot;
+    android:layout_gravity=&amp;quot;center&amp;quot;
+    android:autoLink=&amp;quot;web&amp;quot;
+    android:id=&amp;quot;@+id/link&amp;quot;
+    android:textSize=&amp;quot;18sp&amp;quot;
+    /&amp;gt;
+&amp;lt;EditText
+    android:layout_height=&amp;quot;wrap_content&amp;quot;
+    android:layout_width=&amp;quot;fill_parent&amp;quot;
+    android:layout_marginBottom=&amp;quot;0dip&amp;quot;
+    android:layout_marginLeft=&amp;quot;6dip&amp;quot;
+    android:layout_marginRight=&amp;quot;6dip&amp;quot;
+    android:layout_marginTop=&amp;quot;24dip&amp;quot;
+    android:hint=&amp;quot;sise&amp;quot;
+    android:id=&amp;quot;@+id/message&amp;quot;
+    android:maxLines=&amp;quot;1&amp;quot;
+    /&amp;gt;
+&amp;lt;Button
+    android:layout_width=&amp;quot;wrap_content&amp;quot;
+    android:layout_height=&amp;quot;wrap_content&amp;quot;
+    android:layout_gravity=&amp;quot;right&amp;quot;
+    android:layout_margin=&amp;quot;6dip&amp;quot;
+    android:paddingLeft=&amp;quot;24dip&amp;quot;
+    android:paddingRight=&amp;quot;24dip&amp;quot;
+    android:text=&amp;quot;ok&amp;quot;
+    android:id=&amp;quot;@+id/ok&amp;quot;
+    /&amp;gt;
+&amp;lt;/LinearLayout&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;//测试代码&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;package com.sise.zhw.test;
+
+import static android.test.MoreAsserts.assertNotContainsRegex;
+import static android.test.ViewAsserts.assertOnScreen;
+import static android.test.ViewAsserts.assertRightAligned;
+
+import com.sise.zhw.MyProjectActivity;
+
+
+import android.app.Instrumentation;
+import android.app.Instrumentation.ActivityMonitor;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.test.ActivityInstrumentationTestCase2;
+import android.test.TouchUtils;
+import android.test.UiThreadTest;
+import android.view.KeyEvent;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+
+
+public class MyFirstProjectActivityTests extends
+        ActivityInstrumentationTestCase2&amp;lt;MyProjectActivity&amp;gt; {
+    private MyProjectActivity mActivity;
+    private EditText mMessage;
+    private Button mCapitalize;
+    private TextView mLink;
+    private Instrumentation mInstrumentation;
+    public MyFirstProjectActivityTests() {
+        this(&amp;quot;MyFirstProjectActivityTests&amp;quot;);
+    }
+    public MyFirstProjectActivityTests(String name) {
+        super(MyProjectActivity.class);
+        setName(name);
+    }
+    protected void setUp() throws Exception {
+        super.setUp();
+        setActivityInitialTouchMode(false);    
+        mActivity = getActivity();
+        mInstrumentation = getInstrumentation();
+        mLink = (TextView)mActivity.findViewById(com.sise.zhw.R.id.link);
+        mMessage = (EditText)mActivity.findViewById(com.sise.zhw.R.id.message);
+        mCapitalize = (Button)mActivity.findViewById(com.sise.zhw.R.id.ok);
+    }
+    protected void tearDown() throws Exception {
+        super.tearDown();
+    }
+    public void testPreConditions() {
+        assertNotNull(mActivity);
+        assertNotNull(mInstrumentation);
+        assertNotNull(mLink);
+        assertNotNull(mMessage);
+        assertNotNull(mCapitalize);
+    }
+    public void testAlignment() {
+        final int margin = 0;
+        assertRightAligned(mMessage, mCapitalize, margin);
+    }
+    public void testUserInterfaceLayout() {
+        final int margin = 0;
+        final View origin = mActivity.getWindow().getDecorView();
+        assertOnScreen(origin, mMessage);
+        assertOnScreen(origin, mCapitalize);
+        assertRightAligned(mMessage, mCapitalize, margin);
+    }
+    public void testUserInterfaceLayoutWithOtherOrigin() {
+        final int margin = 0;
+        View origin = mMessage.getRootView();
+        assertOnScreen(origin, mMessage);
+        origin = mCapitalize.getRootView();
+        assertOnScreen(origin, mCapitalize);
+        assertRightAligned(mMessage, mCapitalize, margin);
+    }
+    @UiThreadTest
+    public void testNoErrorInCapitalization() {
+        final String msg = &amp;quot;this is a sample&amp;quot;;
+        mMessage.setText(msg);
+        mCapitalize.performClick();
+        final String actual = mMessage.getText().toString();
+        final String notExpectedRegexp = &amp;quot;(?i:ERROR)&amp;quot;;
+        assertNotContainsRegex(&amp;quot;Capitalization found error:&amp;quot;,
+                notExpectedRegexp, actual);
+    }
+    public void testFollowLink() {
+        final Instrumentation inst = getInstrumentation();
+        IntentFilter intentFilter = new IntentFilter(Intent.ACTION_VIEW);
+        intentFilter.addDataScheme(&amp;quot;http&amp;quot;);
+        intentFilter.addCategory(Intent.CATEGORY_BROWSABLE);
+        ActivityMonitor monitor = inst.addMonitor(intentFilter, null, false);
+        assertEquals(0, monitor.getHits());
+        TouchUtils.clickView(this, mLink);
+        monitor.waitForActivityWithTimeout(5000);
+        assertEquals(1, monitor.getHits());
+        inst.removeMonitor(monitor);
+    }
+
+    private void requestMessageFocus() {
+        try {
+            runTestOnUiThread(new Runnable() {
+                public void run() {
+                    mMessage.requestFocus();
+                }
+            });
+        } catch (Throwable e) {
+            fail(&amp;quot;Couldn&amp;apos;t set focus&amp;quot;);
+        }
+        mInstrumentation.waitForIdleSync();
+    }
+
+    public void testSendKeyInts() {
+        requestMessageFocus();
+        sendKeys(KeyEvent.KEYCODE_H,
+                KeyEvent.KEYCODE_E,
+                KeyEvent.KEYCODE_E,
+                KeyEvent.KEYCODE_E,
+                KeyEvent.KEYCODE_Y,
+                KeyEvent.KEYCODE_ALT_LEFT,
+                KeyEvent.KEYCODE_1,
+                KeyEvent.KEYCODE_DPAD_DOWN,
+                KeyEvent.KEYCODE_ENTER);
+        final String expected = &amp;quot;HEEEY!&amp;quot;;
+        final String actual = mMessage.getText().toString();
+        assertEquals(expected, actual);
+    }
+
+    public void testSendKeyString() {
+        requestMessageFocus();
+        sendKeys(&amp;quot;H 3*E Y ALT_LEFT 1 DPAD_DOWN ENTER&amp;quot;);
+        final String expected = &amp;quot;HEEEY!&amp;quot;;
+        final String actual = mMessage.getText().toString();
+        assertEquals(expected, actual);
+    }
+
+    public void testSendRepeatedKeys() {
+        requestMessageFocus();
+        sendRepeatedKeys(1, KeyEvent.KEYCODE_H,
+                3, KeyEvent.KEYCODE_E,
+                1, KeyEvent.KEYCODE_Y,
+                1, KeyEvent.KEYCODE_ALT_LEFT,
+                1, KeyEvent.KEYCODE_1,
+                1, KeyEvent.KEYCODE_DPAD_DOWN,
+                1, KeyEvent.KEYCODE_ENTER);
+
+        final String expected = &amp;quot;HEEEY!&amp;quot;;
+        final String actual = mMessage.getText().toString();
+        assertEquals(expected, actual);
+    }
+
+    public void testCapitalizationSendingKeys() {
+        final String keysSequence = &amp;quot;T E S T SPACE M E&amp;quot;;
+        requestMessageFocus();
+        sendKeys(keysSequence);
+        TouchUtils.clickView(this, mCapitalize);
+        final String expected = &amp;quot;test me&amp;quot;.toUpperCase();
+        final String actual = mMessage.getText().toString();
+        assertEquals(expected, actual);
+    }
+
+    public void testActivityPermission(){
+        final String PKG=&amp;quot;com.sise.zhw&amp;quot;;
+        final String ACTIVITY=PKG+&amp;quot;.MyContactsActivity&amp;quot;;
+        final String PERMISSION=&amp;quot;android.MainFest.permission.CALL_PHONE&amp;quot;;
+        //assertActivityRequiresPermission(PKG,ACTIVITY,PERMISSION);
+
+    }
+
+
+}
+&lt;/code&gt;&lt;/pre&gt;</content>
+    
+    <summary type="html">
+    
+      &lt;h3 id=&quot;一、实验目的&quot;&gt;&lt;a href=&quot;#一、实验目的&quot; class=&quot;headerlink&quot; title=&quot;一、实验目的&quot;&gt;&lt;/a&gt;一、实验目的&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;掌握android测试项目的建立&lt;/li&gt;
+&lt;li&gt;掌握android测试框架的基本内容&lt;/li&gt;
+&lt;li&gt;编写运行android测试&lt;/li&gt;
+&lt;/ol&gt;
+    
+    </summary>
+    
+      <category term="技术" scheme="http://zhonghanwen.xyz/categories/%E6%8A%80%E6%9C%AF/"/>
+    
+    
+      <category term="Android" scheme="http://zhonghanwen.xyz/tags/Android/"/>
+    
+      <category term="测试" scheme="http://zhonghanwen.xyz/tags/%E6%B5%8B%E8%AF%95/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Hello World</title>
+    <link href="http://zhonghanwen.xyz/2016/03/09/hello-world/"/>
+    <id>http://zhonghanwen.xyz/2016/03/09/hello-world/</id>
+    <published>2016-03-08T16:00:00.000Z</published>
+    <updated>2016-04-17T08:30:43.330Z</updated>
+    
+    <content type="html">&lt;p&gt;Welcome to &lt;a href=&quot;https://hexo.io/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Hexo&lt;/a&gt;! This is your very first post. Check &lt;a href=&quot;https://hexo.io/docs/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;documentation&lt;/a&gt; for more info. If you get any problems when using Hexo, you can find the answer in &lt;a href=&quot;https://hexo.io/docs/troubleshooting.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;troubleshooting&lt;/a&gt; or you can ask me on &lt;a href=&quot;https://github.com/hexojs/hexo/issues&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;GitHub&lt;/a&gt;.&lt;br&gt;&lt;a id=&quot;more&quot;&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;h2 id=&quot;Quick-Start&quot;&gt;&lt;a href=&quot;#Quick-Start&quot; class=&quot;headerlink&quot; title=&quot;Quick Start&quot;&gt;&lt;/a&gt;Quick Start&lt;/h2&gt;&lt;h3 id=&quot;Create-a-new-post&quot;&gt;&lt;a href=&quot;#Create-a-new-post&quot; class=&quot;headerlink&quot; title=&quot;Create a new post&quot;&gt;&lt;/a&gt;Create a new post&lt;/h3&gt;&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;$ hexo new &lt;span class=&quot;string&quot;&gt;&quot;My New Post&quot;&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;p&gt;More info: &lt;a href=&quot;https://hexo.io/docs/writing.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Writing&lt;/a&gt;&lt;/p&gt;
+&lt;h3 id=&quot;Run-server&quot;&gt;&lt;a href=&quot;#Run-server&quot; class=&quot;headerlink&quot; title=&quot;Run server&quot;&gt;&lt;/a&gt;Run server&lt;/h3&gt;&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;$ hexo server&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;p&gt;More info: &lt;a href=&quot;https://hexo.io/docs/server.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Server&lt;/a&gt;&lt;/p&gt;
+&lt;h3 id=&quot;Generate-static-files&quot;&gt;&lt;a href=&quot;#Generate-static-files&quot; class=&quot;headerlink&quot; title=&quot;Generate static files&quot;&gt;&lt;/a&gt;Generate static files&lt;/h3&gt;&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;$ hexo generate&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;p&gt;More info: &lt;a href=&quot;https://hexo.io/docs/generating.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Generating&lt;/a&gt;&lt;/p&gt;
+&lt;h3 id=&quot;Deploy-to-remote-sites&quot;&gt;&lt;a href=&quot;#Deploy-to-remote-sites&quot; class=&quot;headerlink&quot; title=&quot;Deploy to remote sites&quot;&gt;&lt;/a&gt;Deploy to remote sites&lt;/h3&gt;&lt;figure class=&quot;highlight bash&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;$ hexo deploy&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;
+&lt;p&gt;More info: &lt;a href=&quot;https://hexo.io/docs/deployment.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;Deployment&lt;/a&gt;&lt;/p&gt;
+</content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;Welcome to &lt;a href=&quot;https://hexo.io/&quot;&gt;Hexo&lt;/a&gt;! This is your very first post. Check &lt;a href=&quot;https://hexo.io/docs/&quot;&gt;documentation&lt;/a&gt; for more info. If you get any problems when using Hexo, you can find the answer in &lt;a href=&quot;https://hexo.io/docs/troubleshooting.html&quot;&gt;troubleshooting&lt;/a&gt; or you can ask me on &lt;a href=&quot;https://github.com/hexojs/hexo/issues&quot;&gt;GitHub&lt;/a&gt;.&lt;br&gt;
+    
+    </summary>
+    
+      <category term="技术" scheme="http://zhonghanwen.xyz/categories/%E6%8A%80%E6%9C%AF/"/>
+    
+    
+      <category term="Android" scheme="http://zhonghanwen.xyz/tags/Android/"/>
+    
+      <category term="Java" scheme="http://zhonghanwen.xyz/tags/Java/"/>
+    
+      <category term="React-Native" scheme="http://zhonghanwen.xyz/tags/React-Native/"/>
+    
+  </entry>
+  
+</feed>

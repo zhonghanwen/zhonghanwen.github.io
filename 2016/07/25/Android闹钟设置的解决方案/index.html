@@ -1,0 +1,872 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Android,闹钟," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="HanWen's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="Android设置闹钟并不像IOS那样这么简单，做过Android设置闹钟的开发者都知道里面的坑有多深。下面记录一下，我解决Android闹钟设置的解决方案。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android闹钟设置的解决方案">
+<meta property="og:url" content="http://zhonghanwen.xyz/2016/07/25/Android闹钟设置的解决方案/index.html">
+<meta property="og:site_name" content="HanWen's Blog">
+<meta property="og:description" content="Android设置闹钟并不像IOS那样这么简单，做过Android设置闹钟的开发者都知道里面的坑有多深。下面记录一下，我解决Android闹钟设置的解决方案。">
+<meta property="og:image" content="http://7xrnko.com1.z0.glb.clouddn.com/Android_Alcok.jpg">
+<meta property="og:image" content="http://7xrnko.com1.z0.glb.clouddn.com/blog_20160722145548.png">
+<meta property="og:updated_time" content="2016-09-11T15:19:20.563Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android闹钟设置的解决方案">
+<meta name="twitter:description" content="Android设置闹钟并不像IOS那样这么简单，做过Android设置闹钟的开发者都知道里面的坑有多深。下面记录一下，我解决Android闹钟设置的解决方案。">
+<meta name="twitter:image" content="http://7xrnko.com1.z0.glb.clouddn.com/Android_Alcok.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> Android闹钟设置的解决方案 | HanWen's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?78741432f885a277a23ed1a739deca07";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">HanWen's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">Android Developer</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Android闹钟设置的解决方案
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-07-25T22:10:07+08:00" content="2016-07-25">
+              2016-07-25
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/技术/" itemprop="url" rel="index">
+                    <span itemprop="name">技术</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/07/25/Android闹钟设置的解决方案/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/07/25/Android闹钟设置的解决方案/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/07/25/Android闹钟设置的解决方案/" class="leancloud_visitors" data-flag-title="Android闹钟设置的解决方案">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p>Android设置闹钟并不像IOS那样这么简单，做过Android设置闹钟的开发者都知道里面的坑有多深。下面记录一下，我解决Android闹钟设置的解决方案。</p>
+</blockquote>
+<p><img src="http://7xrnko.com1.z0.glb.clouddn.com/Android_Alcok.jpg" alt=""></p>
+<a id="more"></a>
+<h2 id="主要问题"><a href="#主要问题" class="headerlink" title="主要问题"></a>主要问题</h2><ol>
+<li>API19开始AlarmManager的机制修改。</li>
+<li>应用程序被Kill掉后,设置的闹钟不响。</li>
+<li>6.0以上进入Doze模式会使JobScheduler停止工作。</li>
+<li>手机设置重启后，闹钟失效问题。</li>
+</ol>
+<h3 id="API19以上AlarmManager机制的修改"><a href="#API19以上AlarmManager机制的修改" class="headerlink" title="API19以上AlarmManager机制的修改"></a>API19以上AlarmManager机制的修改</h3><p>API19之前AlarmManager提供了三个设置闹钟的方法，由于业务需求闹钟只需要一次性，所以采用set(int type，long startTime，PendingIntent pi)；这个方法。<br>从API 19开始，AlarmManager的机制都是非准确传递，操作系统将会转换闹钟，来最小化唤醒和电池使用。</p>
+<p><img src="http://7xrnko.com1.z0.glb.clouddn.com/blog_20160722145548.png" alt=""></p>
+<p>由于之前的程序，没有对API19以上的闹钟设置做处理，导致在4.4以上的手机设置闹钟无响应（应用程序没有被杀死的情况也没有闹钟）。</p>
+<p>因些，设置闹钟需要根据API的版本进行分别处理设置。代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">AlarmManager am = (AlarmManager) getActivity()</span><br><span class="line">	   .getSystemService(Context.ALARM_SERVICE);</span><br><span class="line"><span class="keyword">if</span> (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.KITKAT) &#123;</span><br><span class="line">	am.setExact(AlarmManager.RTC_WAKEUP, TimeUtils</span><br><span class="line">		.stringToLong(recordTime, TimeUtils.NO_SECOND_FORMAT), sender);</span><br><span class="line">&#125;<span class="keyword">else</span> &#123;</span><br><span class="line">	am.set(AlarmManager.RTC_WAKEUP, TimeUtils</span><br><span class="line">		.stringToLong(recordTime, TimeUtils.NO_SECOND_FORMAT), sender);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样，保证闹钟在应用程序没有被Kill掉的情况闹钟。</p>
+<h3 id="应用程序被Kill掉时的处理"><a href="#应用程序被Kill掉时的处理" class="headerlink" title="应用程序被Kill掉时的处理"></a>应用程序被Kill掉时的处理</h3><p>应用程序被Kill掉后，设置的闹钟失效，这里利用守护进程以及灰色保活来保证后台闹钟服务不被Kill掉。当应用程序以及闹钟服务被Kill掉，守护进程以及灰色保活来重新启动闹钟服务，并且重新设置闹钟。<br>关于守护进程的处理，这里采用开源的守护进程库。<a href="https://github.com/Coolerfall/Android-AppDaemon" target="_blank" rel="external">Android-AppDaemon</a></p>
+<p>在闹钟服务的onCreat加入Android-AppDaemon这个开源的守护进程。代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">super</span>.onCreate();</span><br><span class="line">    Daemon.run(DaemonService.<span class="keyword">this</span>, </span><br><span class="line">           DaemonService.class, Daemon.INTERVAL_ONE_MINUTE);</span><br><span class="line">    startTimeTask();</span><br><span class="line">    grayGuard();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>为进一步保证闹钟服务的存活，同加上灰色保活（利用系统的漏洞启动前台Service）。<br>代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">grayGuard</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (Build.VERSION.SDK_INT &lt; <span class="number">18</span>) &#123;</span><br><span class="line">		<span class="comment">//API &lt; 18 ，此方法能有效隐藏Notification上的图标</span></span><br><span class="line">		startForeground(GRAY_SERVICE_ID, <span class="keyword">new</span> Notification());</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		Intent innerIntent = <span class="keyword">new</span> Intent(<span class="keyword">this</span>, DaemonInnerService.class);</span><br><span class="line">		startService(innerIntent);</span><br><span class="line">		startForeground(GRAY_SERVICE_ID, <span class="keyword">new</span> Notification());</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//发送唤醒广播来促使挂掉的UI进程重新启动起来</span></span><br><span class="line">	AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);</span><br><span class="line">	Intent alarmIntent = <span class="keyword">new</span> Intent();</span><br><span class="line">	alarmIntent.setAction(WakeReceiver.GRAY_WAKE_ACTION);</span><br><span class="line">	PendingIntent operation = PendingIntent.getBroadcast(<span class="keyword">this</span>, </span><br><span class="line">		WAKE_REQUEST_CODE, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);</span><br><span class="line">	<span class="keyword">if</span> (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.KITKAT) &#123;</span><br><span class="line">		alarmManager.setWindow(AlarmManager.RTC_WAKEUP, </span><br><span class="line">			System.currentTimeMillis(), ALARM_INTERVAL, operation);</span><br><span class="line">	&#125;<span class="keyword">else</span> &#123;</span><br><span class="line">		alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP, </span><br><span class="line">			System.currentTimeMillis(), ALARM_INTERVAL, operation);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span><br><span class="line"> * 给 API &gt;= 18 的平台上用的灰色保活手段</span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">DaemonInnerService</span> <span class="keyword">extends</span> <span class="title">Service</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		Log.i(LOG_TAG, <span class="string">"InnerService -&gt; onCreate"</span>);</span><br><span class="line">		<span class="keyword">super</span>.onCreate();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">onStartCommand</span><span class="params">(Intent intent, <span class="keyword">int</span> flags, <span class="keyword">int</span> startId)</span> </span>&#123;</span><br><span class="line">		Log.i(LOG_TAG, <span class="string">"InnerService -&gt; onStartCommand"</span>);</span><br><span class="line">		startForeground(GRAY_SERVICE_ID, <span class="keyword">new</span> Notification());</span><br><span class="line">		<span class="comment">//stopForeground(true);</span></span><br><span class="line">		stopSelf();</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">super</span>.onStartCommand(intent, flags, startId);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> IBinder <span class="title">onBind</span><span class="params">(Intent intent)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">throw</span> <span class="keyword">new</span> UnsupportedOperationException(<span class="string">"Not yet implemented"</span>);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onDestroy</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		Log.i(LOG_TAG, <span class="string">"InnerService -&gt; onDestroy"</span>);</span><br><span class="line">		<span class="keyword">super</span>.onDestroy();</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面操作尽可能提高闹钟服务的存活。但是在5.0以上的手机，利用系统的自带的Clean功能的时候，还是会将闹钟服务彻底的干掉。为了解决5.0以上的问题，这里引入5.0以上的新特性 JobScheduler。</p>
+<h3 id="5-0以上的JobScheduler"><a href="#5-0以上的JobScheduler" class="headerlink" title="5.0以上的JobScheduler"></a>5.0以上的JobScheduler</h3><p>关于5.0新增JobScheduler·API可以先阅读这篇文章。<a href="http://blog.csdn.net/bboyfeiyu/article/details/44809395" target="_blank" rel="external">here</a><br>在这里利用5.0以上的JobScheduler创建一个定时的任务，定时检测闹钟服务是否存在，没在存在则重新启动闹钟服务。（这里我设置每一分钟检测一次闹钟服务）</p>
+<p>在进入应用程序的时候检测当前系统是否是5.0以上，如果是则启动JobScheduler这个服务。代码如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.LOLLIPOP) &#123;</span><br><span class="line">	mJobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);</span><br><span class="line">	JobInfo.Builder builder = <span class="keyword">new</span> JobInfo.Builder(JOB_ID,</span><br><span class="line">			<span class="keyword">new</span> ComponentName(getPackageName(), JobSchedulerService.class.getName()));</span><br><span class="line"></span><br><span class="line">	builder.setPeriodic(<span class="number">60</span> * <span class="number">1000</span>); <span class="comment">//每隔60秒运行一次</span></span><br><span class="line">	builder.setRequiresCharging(<span class="keyword">true</span>);</span><br><span class="line">	builder.setPersisted(<span class="keyword">true</span>);  <span class="comment">//设置设备重启后，是否重新执行任务</span></span><br><span class="line">	builder.setRequiresDeviceIdle(<span class="keyword">true</span>);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (mJobScheduler.schedule(builder.build()) &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">		<span class="comment">//If something goes wrong</span></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>其中的builder.setPersisted(true); 方法是设备重启后，是否重新执行任务，在这测过是可以重新启动任务的。</p>
+<p>上面的操作进一步保证了闹钟服务被Kill掉后，重新启动服务。但是在6.0以上引入了Doze模式，当6.0以上的手机进入这个模式后，便会使JobScheduler停止工作。</p>
+<h3 id="6-0以上Doze模式的处理"><a href="#6-0以上Doze模式的处理" class="headerlink" title="6.0以上Doze模式的处理"></a>6.0以上Doze模式的处理</h3><p>为了让JobScheduler可以在6.0以上进入Doze模式工作，这里针对6.0以上的Doze模式做特殊的处理-<strong>忽略电池的优化</strong>。</p>
+<ol>
+<li><p>在Manifest.xml中加入权限。<br><code>&lt;uses-permission android:name=&quot;android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS&quot;/&gt;</code></p>
+</li>
+<li><p>在设置闹钟的时候，判断系统是否是6.0以上，如果是,则判断是否忽略电池的优化。判断是否忽略电池优化代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@TargetApi</span>(Build.VERSION_CODES.M)</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">isIgnoringBatteryOptimizations</span><span class="params">(Activity activity)</span></span>&#123;</span><br><span class="line">	String packageName = activity.getPackageName();</span><br><span class="line">	PowerManager pm = (PowerManager) activity</span><br><span class="line">			.getSystemService(Context.POWER_SERVICE);</span><br><span class="line">	<span class="keyword">if</span> (pm.isIgnoringBatteryOptimizations(packageName)) &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">	&#125;<span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>如果没有忽略电池优化的时候，弹出提醒对话框，提示用户进行忽略电池优化操作。代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * 针对N以上的Doze模式</span><br><span class="line"> *</span><br><span class="line"> * <span class="doctag">@param</span> activity</span><br><span class="line"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">isIgnoreBatteryOption</span><span class="params">(Activity activity)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.M) &#123;</span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">			Intent intent = <span class="keyword">new</span> Intent();</span><br><span class="line">			String packageName = activity.getPackageName();</span><br><span class="line">			PowerManager pm = (PowerManager) activity.getSystemService(Context.POWER_SERVICE);</span><br><span class="line">			<span class="keyword">if</span> (!pm.isIgnoringBatteryOptimizations(packageName)) &#123;</span><br><span class="line"><span class="comment">//               intent.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);</span></span><br><span class="line">				intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);</span><br><span class="line">				intent.setData(Uri.parse(<span class="string">"package:"</span> + packageName));</span><br><span class="line">				activity.startActivityForResult(intent, REQUEST_IGNORE_BATTERY_CODE);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">			e.printStackTrace();</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>在界面重写onActivityResult方法来捕获用户的选择。如，代码如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onActivityResult</span><span class="params">(<span class="keyword">int</span> requestCode, <span class="keyword">int</span> resultCode, Intent data)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (resultCode == RESULT_OK) &#123;</span><br><span class="line">		<span class="keyword">if</span> (requestCode == BatteryUtils.REQUEST_IGNORE_BATTERY_CODE)&#123;</span><br><span class="line">			<span class="comment">//TODO something</span></span><br><span class="line">		&#125;</span><br><span class="line">	&#125;<span class="keyword">else</span> <span class="keyword">if</span> (resultCode == RESULT_CANCELED)&#123;</span><br><span class="line">		<span class="keyword">if</span> (requestCode == BatteryUtils.REQUEST_IGNORE_BATTERY_CODE)&#123;</span><br><span class="line">			ToastUtils.show(getActivity(), <span class="string">"请开启忽略电池优化~"</span>);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="补充"><a href="#补充" class="headerlink" title="补充"></a>补充</h2><p>当应用程序被Kill掉，但是闹钟的服务没有被Kill掉的，这时候又设置了闹钟。这就意味着设置的闹钟没有放到闹钟服务那里。所以这种情况，设置的闹钟会失效。为了解决这种情况，利用AIDL（闹钟服务在另一个进程的需要进程间通信）调用闹钟服务的重新设置闹钟方法重设闹钟。</p>
+<p>在应用程序的onCreat()方法启动闹钟服务，然后再绑定闹钟服务。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">initAlarmService</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	startService(<span class="keyword">new</span> Intent(<span class="keyword">this</span>, DaemonService.class));<span class="comment">//启动闹钟服务</span></span><br><span class="line">	<span class="keyword">if</span> (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.LOLLIPOP) &#123;</span><br><span class="line">	    <span class="comment">//JobScheduler</span></span><br><span class="line">		...</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//绑定闹钟服务</span></span><br><span class="line">	Intent intent = <span class="keyword">new</span> Intent(<span class="keyword">this</span>, DaemonService.class);</span><br><span class="line">	intent.setAction(<span class="string">"android.intent.action.DaemonService"</span>);</span><br><span class="line">	bindService(intent, mConnection, Context.BIND_AUTO_CREATE);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在onDestroy()方法，调用闹钟服务的重设闹钟方法。代码如下：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onDestroy</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	<span class="keyword">super</span>.onDestroy();</span><br><span class="line">	<span class="keyword">try</span> &#123;<span class="comment">//判断是否有闹钟，没有则关闭闹钟服务</span></span><br><span class="line">		String alarm = localPreferencesHelper.getString(LocalPreferencesHelper.ALARM_CLOCK);</span><br><span class="line">		<span class="keyword">if</span> (daemonService != -<span class="number">1</span> &amp;&amp; mIRemoteService != <span class="keyword">null</span>) &#123;</span><br><span class="line"><span class="comment">//                android.os.Process.killProcess(daemonService);</span></span><br><span class="line">			mIRemoteService.resetAlarm();</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		<span class="keyword">if</span> (!alarm.equals(<span class="string">"[]"</span>)) &#123;</span><br><span class="line">			<span class="keyword">if</span> (daemonService != -<span class="number">1</span>) &#123;</span><br><span class="line">				startService(<span class="keyword">new</span> Intent(<span class="keyword">this</span>, DaemonService.class));</span><br><span class="line">			&#125;</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="keyword">if</span> (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.LOLLIPOP) &#123;</span><br><span class="line">				mJobScheduler.cancel(JOB_ID);</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">		&#125;</span><br><span class="line">		unbindService(mConnection); <span class="comment">//解除绑定服务。</span></span><br><span class="line">	&#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line"></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里说明一下，当服务启动并且被绑定的情况下，unbindService是不会停止服务的。具体可以查看这篇文章。<a href="http://www.cnblogs.com/newcj/archive/2011/05/30/2061370.html" target="_blank" rel="external">here</a></p>
+<h2 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h2><p>以上并不代表所有的Android手机的闹钟都可以用，这只是尽最大的可能保证大部分的手机。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag">#Android</a>
+          
+            <a href="/tags/闹钟/" rel="tag">#闹钟</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/06/15/Android Studio代码混淆插件/" rel="next" title="Android Studio代码混淆插件">
+                <i class="fa fa-chevron-left"></i> Android Studio代码混淆插件
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2016/07/25/Android闹钟设置的解决方案/"
+     data-title="Android闹钟设置的解决方案"
+     data-content=""
+     data-url="http://zhonghanwen.xyz/2016/07/25/Android闹钟设置的解决方案/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/07/25/Android闹钟设置的解决方案/"
+           data-title="Android闹钟设置的解决方案" data-url="http://zhonghanwen.xyz/2016/07/25/Android闹钟设置的解决方案/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.jpg"
+               alt="HanWen" />
+          <p class="site-author-name" itemprop="name">HanWen</p>
+          <p class="site-description motion-element" itemprop="description">猎豹移动</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">14</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/zhonghanwen" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/zhonghanwen" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/zhonghanwen" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.jianshu.com/users/774672153679/latest_articles" target="_blank" title="简书">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  简书
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/zhong-yi-wen-59" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#主要问题"><span class="nav-number">1.</span> <span class="nav-text">主要问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#API19以上AlarmManager机制的修改"><span class="nav-number">1.1.</span> <span class="nav-text">API19以上AlarmManager机制的修改</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用程序被Kill掉时的处理"><span class="nav-number">1.2.</span> <span class="nav-text">应用程序被Kill掉时的处理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-0以上的JobScheduler"><span class="nav-number">1.3.</span> <span class="nav-text">5.0以上的JobScheduler</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-0以上Doze模式的处理"><span class="nav-number">1.4.</span> <span class="nav-text">6.0以上Doze模式的处理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#补充"><span class="nav-number">2.</span> <span class="nav-text">补充</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#最后"><span class="nav-number">3.</span> <span class="nav-text">最后</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">HanWen</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zhonghanwen"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+  
+
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("sHN1rpeKUfIVmjvFXwuz6CMb-gzGzoHsz", "RMXFOwwsF61uWwq890zXh4RF");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>

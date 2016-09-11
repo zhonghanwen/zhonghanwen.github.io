@@ -1,0 +1,905 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Android,热修复,java," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="HanWen's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="一直关注App的热修复的技术发展，之前做的应用也没用使用到什么热修复开源框架。在App的热修复框架没有流行之前，做的应用上线后发现一个小小的Bug，就要马上发一个新的版本。我亲身经历过一周发两个版本，真的折腾用户的节奏~~所以，要开始考虑引入热修复。下面记录使用开源框架阿里巴巴的AndFix过程。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android热修复实践应用--AndFix">
+<meta property="og:url" content="http://zhonghanwen.xyz/2016/03/17/Android热修复实践--AndFix/index.html">
+<meta property="og:site_name" content="HanWen's Blog">
+<meta property="og:description" content="一直关注App的热修复的技术发展，之前做的应用也没用使用到什么热修复开源框架。在App的热修复框架没有流行之前，做的应用上线后发现一个小小的Bug，就要马上发一个新的版本。我亲身经历过一周发两个版本，真的折腾用户的节奏~~所以，要开始考虑引入热修复。下面记录使用开源框架阿里巴巴的AndFix过程。">
+<meta property="og:image" content="http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_1.png">
+<meta property="og:image" content="http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_2.png">
+<meta property="og:image" content="http://7xrnko.com1.z0.glb.clouddn.com/umneg_online.png">
+<meta property="og:image" content="http://7xrnko.com1.z0.glb.clouddn.com/jpush.png">
+<meta property="og:image" content="http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_3.png">
+<meta property="og:image" content="http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_4.png">
+<meta property="og:image" content="http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_5.png">
+<meta property="og:image" content="http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_6.png">
+<meta property="og:image" content="http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_7.png">
+<meta property="og:image" content="http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_8.png">
+<meta property="og:updated_time" content="2016-04-17T08:30:43.346Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android热修复实践应用--AndFix">
+<meta name="twitter:description" content="一直关注App的热修复的技术发展，之前做的应用也没用使用到什么热修复开源框架。在App的热修复框架没有流行之前，做的应用上线后发现一个小小的Bug，就要马上发一个新的版本。我亲身经历过一周发两个版本，真的折腾用户的节奏~~所以，要开始考虑引入热修复。下面记录使用开源框架阿里巴巴的AndFix过程。">
+<meta name="twitter:image" content="http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_1.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> Android热修复实践应用--AndFix | HanWen's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?78741432f885a277a23ed1a739deca07";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">HanWen's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">Android Developer</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Android热修复实践应用--AndFix
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-03-17T09:41:07+08:00" content="2016-03-17">
+              2016-03-17
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/技术/" itemprop="url" rel="index">
+                    <span itemprop="name">技术</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/03/17/Android热修复实践--AndFix/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/03/17/Android热修复实践--AndFix/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+             <span id="/2016/03/17/Android热修复实践--AndFix/" class="leancloud_visitors" data-flag-title="Android热修复实践应用--AndFix">
+               &nbsp; | &nbsp;
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               <span class="post-meta-item-text">阅读次数 </span>
+               <span class="leancloud-visitors-count"></span>
+              </span>
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p>一直关注App的热修复的技术发展，之前做的应用也没用使用到什么热修复开源框架。在App的热修复框架没有流行之前，做的应用上线后发现一个小小的Bug，就要马上发一个新的版本。我亲身经历过一周发两个版本，真的折腾用户的节奏~~所以，要开始考虑引入热修复。下面记录使用开源框架阿里巴巴的AndFix过程。<br><a id="more"></a></p>
+</blockquote>
+<h3 id="实现的原理"><a href="#实现的原理" class="headerlink" title="实现的原理"></a>实现的原理</h3><p>这里说的不是热修复怎么实现修bug的原理，这里说的是怎么使用AndFix。如果你想了解更多的andFix实现原理，你可以参考下面的文章：</p>
+<ul>
+<li><a href="https://github.com/alibaba/AndFix" target="_blank" rel="external">https://github.com/alibaba/AndFix</a> （AndFix的官网）</li>
+<li><a href="http://blog.csdn.net/lmj623565791/article/details/49883661" target="_blank" rel="external">http://blog.csdn.net/lmj623565791/article/details/49883661</a> （Android大神鸿洋的Bolg文章）</li>
+</ul>
+<p>## </p>
+<ol>
+<li>应用启动的时候，在 onCreate() 方法中获取友盟的在线参数来判断当前的应用版本是否有补丁需要下载，有则通过ThinDonloadManager来下载到SD下并且通过使用AndFix来加载到应用中。</li>
+<li>使用极光推送消息到该应用的版本需要下载补丁，如果应用收到了消息后，应用判断当前的版本是否需要下载补丁。如果应用没有收到消息的通知，则下次启动App的时候，获取友盟在线参数来判断是否需要下载补丁。</li>
+</ol>
+<h3 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h3><ol>
+<li>在gradle文件中增加相应的依赖。这里我使用thindownlaodmanager来下载补丁，使用极光推送来推送自定义消息下载补丁通知，使用友盟在线参数来获取补丁包的信息。也许你会问为了修复一个补丁而增加这么多的依赖，值得吗？我认为还可以吧，因为我的项目一般会使用到这些。</li>
+</ol>
+<p><img src="http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_1.png" alt=""></p>
+<p>AndFix的引入是：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">compile <span class="string">'com.alipay.euler:andfix:0.3.1@aar'</span></span><br></pre></td></tr></table></figure>
+<ol>
+<li><p>导入AndFix的so库文件以及极光推送的so库文件;<br><br>极光推送集成参考文档:<a href="http://docs.jpush.io/client/android_sdk/" target="_blank" rel="external">http://docs.jpush.io/client/android_sdk/</a><br><br><font color="red">注意：</font>导入AndFix的so文件时，可以先阅读这下个：<a href="https://github.com/zhonghanwen/AndFix-Ndk-Build-ADT" target="_blank" rel="external">https://github.com/zhonghanwen/AndFix-Ndk-Build-ADT</a><br><img src="http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_2.png" alt=""><br><br></p>
+<ul>
+<li>接着，集成友盟在线参数<br><br>参考官方文档:<a href="http://dev.umeng.com/online-parameters/android-doc/intergration" target="_blank" rel="external">http://dev.umeng.com/online-parameters/android-doc/intergration</a></li>
+</ul>
+</li>
+<li><p>配置友盟在线参数的参数以及推光推送自定义的内容</p>
+<ul>
+<li><p>友盟在线参数<br><img src="http://7xrnko.com1.z0.glb.clouddn.com/umneg_online.png" alt=""></p>
+</li>
+<li><p>极光推送自定义消息(自定义消息有长度限制，所以补丁的下载url写成拼接形式：站点+下载资源名称)<br><img src="http://7xrnko.com1.z0.glb.clouddn.com/jpush.png" alt=""></p>
+</li>
+<li><p>定义相对应的Bean<br><img src="http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_3.png" alt=""> </p>
+</li>
+</ul>
+</li>
+<li><p>在启动的自定义Application类进行初始化工作(AndFix、极光的初始化)<br><img src="http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_4.png" alt=""></p>
+</li>
+<li><p>在程序的入口类进行友盟补丁的检测：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">getUmengParamAndFix</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">//获取友盟在线参数对应key的values</span></span><br><span class="line">    String pathInfo = OnlineConfigAgent.getInstance().getConfigParams(<span class="keyword">this</span>, UMENG_ONLINE_PARAM);</span><br><span class="line">    <span class="keyword">if</span> (!TextUtils.isEmpty(pathInfo))&#123;</span><br><span class="line">        PatchBean onLineBean = GsonUtils.getInstance().parseIfNull(PatchBean.class , pathInfo);</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">//进行判断当前版本是否有补丁需要下载更新</span></span><br><span class="line">            RepairBugUtil.getInstance().comparePath(<span class="keyword">this</span>, onLineBean);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>再加上推送推送的自定义内容的处理：（当推送消息过来的时候应用处于运行状态的时候，程序会处理消息进行下载补丁包）</p>
+</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> WeakHandler mHandler = <span class="keyword">new</span> WeakHandler(<span class="keyword">new</span> Handler.Callback() &#123;</span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">handleMessage</span><span class="params">(Message msg)</span> </span>&#123;</span><br><span class="line">	    <span class="keyword">if</span> (msg.what == MSG_WHAT_DOWNLOAD)&#123;</span><br><span class="line">	        String message = (String) msg.obj;</span><br><span class="line">	        <span class="keyword">if</span> (TextUtils.isEmpty(message)) <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">	        <span class="keyword">try</span> &#123;</span><br><span class="line">	            PatchBean bean = GsonUtils.getInstance().parse(PatchBean.class, message);</span><br><span class="line">	            RepairBugUtil.getInstance().comparePath(MainActivity.<span class="keyword">this</span>, bean);</span><br><span class="line">	        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">	            e.printStackTrace();</span><br><span class="line">	        &#125;</span><br><span class="line">	    &#125;</span><br><span class="line">	    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	&#125;);</span><br><span class="line">	</span><br><span class="line">	</span><br><span class="line">	</span><br><span class="line">	<span class="comment">//for receive customer msg from jpush server</span></span><br><span class="line">	<span class="keyword">private</span> MessageReceiver mMessageReceiver;</span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String MESSAGE_RECEIVED_ACTION = <span class="string">"com.zhw.andfix.MESSAGE_RECEIVED_ACTION"</span>;</span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String KEY_MESSAGE = <span class="string">"message"</span>;</span><br><span class="line">	</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">registerMessageReceiver</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	mMessageReceiver = <span class="keyword">new</span> MessageReceiver();</span><br><span class="line">	IntentFilter filter = <span class="keyword">new</span> IntentFilter();</span><br><span class="line">	filter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);</span><br><span class="line">	filter.addAction(MESSAGE_RECEIVED_ACTION);</span><br><span class="line">	registerReceiver(mMessageReceiver, filter);</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MessageReceiver</span> <span class="keyword">extends</span> <span class="title">BroadcastReceiver</span> </span>&#123;</span><br><span class="line">	</span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onReceive</span><span class="params">(Context context, Intent intent)</span> </span>&#123;</span><br><span class="line">	    <span class="keyword">if</span> (MESSAGE_RECEIVED_ACTION.equals(intent.getAction())) &#123;</span><br><span class="line">	        String message = intent.getStringExtra(KEY_MESSAGE);</span><br><span class="line">	        Message msg = <span class="keyword">new</span> Message();</span><br><span class="line">	        msg.what = MSG_WHAT_DOWNLOAD;</span><br><span class="line">	        msg.obj = message;</span><br><span class="line">	        mHandler.sendMessage(msg);</span><br><span class="line">	    &#125;</span><br><span class="line">	&#125;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<ol>
+<li><p>补丁包的生成</p>
+<ul>
+<li>下载AndFix的补丁生成工具：<a href="https://github.com/alibaba/AndFix/raw/master/tools/apkpatch-1.0.3.zip" target="_blank" rel="external">here</a> </li>
+<li>生成补丁的文件需要的文件有：原apk文件，修复Bug后生成的新apk，签名文件。<br><img src="http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_5.png" alt=""></li>
+<li>在解压apkpatch工具的目录下，打开命令行输入以下命令生成补丁包。<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apkpatch -m &lt;apatch_path...&gt; -o &lt;output&gt; -k &lt;keystore&gt; -p &lt;***&gt; -a &lt;alias&gt; -e &lt;***&gt;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p><img src="http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_6.png" alt=""></p>
+<ul>
+<li>将生成的补丁放到指定服务器上。（这里我放到了七牛上）<br><img src="http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_7.png" alt=""><br><img src="http://7xrnko.com1.z0.glb.clouddn.com/qiniu_andfix_8.png" alt=""></li>
+</ul>
+</li>
+<li><p>自己测试一下成不成啦~</p>
+</li>
+</ol>
+<h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><p>通过ThinDownloadManager下载补丁包，下载成功后使用AndFix加载补丁包的方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">downloadAndLoad</span><span class="params">(Context context, <span class="keyword">final</span> PatchBean bean, String downloadUrl)</span> </span>&#123;</span><br><span class="line">       <span class="keyword">if</span> (mLocalPreferencesHelper == <span class="keyword">null</span>) &#123;</span><br><span class="line">           mLocalPreferencesHelper = <span class="keyword">new</span> LocalPreferencesHelper(context, SPConst.SP_NAME);</span><br><span class="line">       &#125;</span><br><span class="line">       Uri downloadUri = Uri.parse(downloadUrl);</span><br><span class="line">       Uri destinationUri = Uri.parse(Environment.getExternalStorageDirectory()</span><br><span class="line">               .getAbsolutePath() + bean.url);</span><br><span class="line">       DownloadRequest downloadRequest = <span class="keyword">new</span> DownloadRequest(downloadUri)</span><br><span class="line">               .setDestinationURI(destinationUri)</span><br><span class="line">               .setPriority(DownloadRequest.Priority.HIGH)</span><br><span class="line">               .setDownloadListener(<span class="keyword">new</span> DownloadStatusListener() &#123;</span><br><span class="line">                   <span class="meta">@Override</span></span><br><span class="line">                   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onDownloadComplete</span><span class="params">(<span class="keyword">int</span> id)</span> </span>&#123;</span><br><span class="line">                       <span class="comment">// add patch at runtime</span></span><br><span class="line">                       <span class="keyword">try</span> &#123;</span><br><span class="line">                           <span class="comment">// .apatch file path</span></span><br><span class="line">                           String patchFileString = Environment.getExternalStorageDirectory()</span><br><span class="line">                                   .getAbsolutePath() + bean.url;</span><br><span class="line">                           BaseApplication.mPatchManager.addPatch(patchFileString);</span><br><span class="line">                           Log.d(TAG, <span class="string">"apatch:"</span> + patchFileString + <span class="string">" added."</span>);</span><br><span class="line"></span><br><span class="line">                           <span class="comment">//复制且加载补丁成功后，删除下载的补丁</span></span><br><span class="line">                           File f = <span class="keyword">new</span> File(patchFileString);</span><br><span class="line">                           <span class="keyword">if</span> (f.exists()) &#123;</span><br><span class="line">                               <span class="keyword">boolean</span> result = <span class="keyword">new</span> File(patchFileString).delete();</span><br><span class="line">                               <span class="keyword">if</span> (!result)</span><br><span class="line">                                   Log.e(TAG, patchFileString + <span class="string">" delete fail"</span>);</span><br><span class="line">                           &#125;</span><br><span class="line"><span class="comment">//                            mLocalPreferencesHelper.saveOrUpdate(SPConst.IsHavePathDownLoad, false);</span></span><br><span class="line">                       &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">                           Log.e(TAG, <span class="string">""</span>, e);</span><br><span class="line">                       &#125; <span class="keyword">catch</span> (Throwable throwable) &#123;</span><br><span class="line"></span><br><span class="line">                       &#125;</span><br><span class="line">                   &#125;</span><br><span class="line"></span><br><span class="line">                   <span class="meta">@Override</span></span><br><span class="line">                   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onDownloadFailed</span><span class="params">(<span class="keyword">int</span> id, <span class="keyword">int</span> errorCode, String errorMessage)</span> </span>&#123;</span><br><span class="line">                       <span class="comment">//下载失败的时候，标注标记位，等下次重新打开应用的时候重新下载</span></span><br><span class="line"><span class="comment">//                        mLocalPreferencesHelper.saveOrUpdate(SPConst.IsHavePathDownLoad, true);</span></span><br><span class="line">                       Log.e(TAG, <span class="string">"onDownloadFailed"</span>);</span><br><span class="line"></span><br><span class="line">                   &#125;</span><br><span class="line"></span><br><span class="line">                   <span class="meta">@Override</span></span><br><span class="line">                   <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onProgress</span><span class="params">(<span class="keyword">int</span> id, <span class="keyword">long</span> totalBytes, <span class="keyword">int</span> progress)</span> </span>&#123;</span><br><span class="line">                       Log.e(TAG, <span class="string">"progress:"</span> + progress);</span><br><span class="line">                   &#125;</span><br><span class="line">               &#125;);</span><br><span class="line">       mDownloadManager = <span class="keyword">new</span> ThinDownloadManager(THREAD_COUNT);</span><br><span class="line">       mDownloadManager.add(downloadRequest);</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure></p>
+<p>判断是否有补丁包需要下载的方法：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">comparePath</span><span class="params">(Context context, PatchBean RemoteBean)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    String pathInfo = mLocalPreferencesHelper.getString(SPConst.PATH_INFO);</span><br><span class="line">    <span class="keyword">final</span> PatchBean localBean = GsonUtils.getInstance().parseIfNull(PatchBean.class, pathInfo);</span><br><span class="line">    <span class="comment">//远程的应用版本跟当前应用的版本比较</span></span><br><span class="line">    <span class="keyword">if</span> (BaseApplication.VERSION_NAME.equals(RemoteBean.app_v)) &#123;</span><br><span class="line">        <span class="comment">//远程的应用版本跟本地保存的应用版本一样，但补丁不一样，则需要下载重新</span></span><br><span class="line">        <span class="comment">/**</span><br><span class="line">         *第一种情况：当本地记录的Bean为空的时候（刚安装的时候可能为空）并且远程的Bean的path_v不为空的时候需要下载补丁。</span><br><span class="line">         * 第二种情况：当本地记录的path_v和远程Bean的path_v不一样的时候需要下载补丁。</span><br><span class="line">         */</span></span><br><span class="line">        <span class="keyword">if</span> (localBean == <span class="keyword">null</span> &amp;&amp; !TextUtils.isEmpty(RemoteBean.path_v)</span><br><span class="line">                || localBean.app_v.equals(RemoteBean.app_v) &amp;&amp;</span><br><span class="line">                !localBean.path_v.equals(RemoteBean.path_v)) &#123;</span><br><span class="line">            downloadAndLoad(context, RemoteBean,</span><br><span class="line">                    SPConst.URL_PREFIX + RemoteBean.url);</span><br><span class="line">            String json = GsonUtils.getInstance().parse(RemoteBean);</span><br><span class="line">            mLocalPreferencesHelper.saveOrUpdate(SPConst.PATH_INFO, json);</span><br><span class="line">        &#125; <span class="comment">/*else &#123;</span><br><span class="line">            mLocalPreferencesHelper.saveOrUpdate(SPConst.IsHavePathDownLoad, false);</span><br><span class="line">        &#125;*/</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="附"><a href="#附" class="headerlink" title="附"></a>附</h3><p>项目GitHub地址：<a href="https://github.com/zhonghanwen/AndFix-Bad-Practices" target="_blank" rel="external">https://github.com/zhonghanwen/AndFix-Bad-Practices</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Android/" rel="tag">#Android</a>
+          
+            <a href="/tags/热修复/" rel="tag">#热修复</a>
+          
+            <a href="/tags/java/" rel="tag">#java</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/03/12/Android反编译工具的使用-Android Killer/" rel="next" title="Android反编译工具的使用-Android Killer">
+                <i class="fa fa-chevron-left"></i> Android反编译工具的使用-Android Killer
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/04/12/在Windows上将ReactNative集成到现有的Android项目/" rel="prev" title="在Windows上将ReactNative集成到现有的Android项目">
+                在Windows上将ReactNative集成到现有的Android项目 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2016/03/17/Android热修复实践--AndFix/"
+     data-title="Android热修复实践应用--AndFix"
+     data-content=""
+     data-url="http://zhonghanwen.xyz/2016/03/17/Android热修复实践--AndFix/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/03/17/Android热修复实践--AndFix/"
+           data-title="Android热修复实践应用--AndFix" data-url="http://zhonghanwen.xyz/2016/03/17/Android热修复实践--AndFix/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.jpg"
+               alt="HanWen" />
+          <p class="site-author-name" itemprop="name">HanWen</p>
+          <p class="site-description motion-element" itemprop="description">猎豹移动</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">14</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              
+                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-name">分类</span>
+              
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/zhonghanwen" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://twitter.com/zhonghanwen" target="_blank" title="Twitter">
+                  
+                    <i class="fa fa-fw fa-twitter"></i>
+                  
+                  Twitter
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/zhonghanwen" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://www.jianshu.com/users/774672153679/latest_articles" target="_blank" title="简书">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  简书
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/zhong-yi-wen-59" target="_blank" title="知乎">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  知乎
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#实现的原理"><span class="nav-number">1.</span> <span class="nav-text">实现的原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#步骤"><span class="nav-number">2.</span> <span class="nav-text">步骤</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码"><span class="nav-number">3.</span> <span class="nav-text">代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#附"><span class="nav-number">4.</span> <span class="nav-text">附</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">HanWen</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"zhonghanwen"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+  
+
+
+
+
+
+
+  
+  
+  
+
+  
+
+  
+  <script src="https://cdn1.lncld.net/static/js/av-core-mini-0.6.1.js"></script>
+  <script>AV.initialize("sHN1rpeKUfIVmjvFXwuz6CMb-gzGzoHsz", "RMXFOwwsF61uWwq890zXh4RF");</script>
+  <script>
+    function showTime(Counter) {
+      var query = new AV.Query(Counter);
+      var entries = [];
+      var $visitors = $(".leancloud_visitors");
+
+      $visitors.each(function () {
+        entries.push( $(this).attr("id").trim() );
+      });
+
+      query.containedIn('url', entries);
+      query.find()
+        .done(function (results) {
+          var COUNT_CONTAINER_REF = '.leancloud-visitors-count';
+
+          if (results.length === 0) {
+            $visitors.find(COUNT_CONTAINER_REF).text(0);
+            return;
+          }
+
+          for (var i = 0; i < results.length; i++) {
+            var item = results[i];
+            var url = item.get('url');
+            var time = item.get('time');
+            var element = document.getElementById(url);
+
+            $(element).find(COUNT_CONTAINER_REF).text(time);
+          }
+        })
+        .fail(function (object, error) {
+          console.log("Error: " + error.code + " " + error.message);
+        });
+    }
+
+    function addCount(Counter) {
+      var $visitors = $(".leancloud_visitors");
+      var url = $visitors.attr('id').trim();
+      var title = $visitors.attr('data-flag-title').trim();
+      var query = new AV.Query(Counter);
+
+      query.equalTo("url", url);
+      query.find({
+        success: function(results) {
+          if (results.length > 0) {
+            var counter = results[0];
+            counter.fetchWhenSave(true);
+            counter.increment("time");
+            counter.save(null, {
+              success: function(counter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(counter.get('time'));
+              },
+              error: function(counter, error) {
+                console.log('Failed to save Visitor num, with error message: ' + error.message);
+              }
+            });
+          } else {
+            var newcounter = new Counter();
+            /* Set ACL */
+            var acl = new AV.ACL();
+            acl.setPublicReadAccess(true);
+            acl.setPublicWriteAccess(true);
+            newcounter.setACL(acl);
+            /* End Set ACL */
+            newcounter.set("title", title);
+            newcounter.set("url", url);
+            newcounter.set("time", 1);
+            newcounter.save(null, {
+              success: function(newcounter) {
+                var $element = $(document.getElementById(url));
+                $element.find('.leancloud-visitors-count').text(newcounter.get('time'));
+              },
+              error: function(newcounter, error) {
+                console.log('Failed to create');
+              }
+            });
+          }
+        },
+        error: function(error) {
+          console.log('Error:' + error.code + " " + error.message);
+        }
+      });
+    }
+
+    $(function() {
+      var Counter = AV.Object.extend("Counter");
+      if ($('.leancloud_visitors').length == 1) {
+        addCount(Counter);
+      } else if ($('.post-title-link').length > 1) {
+        showTime(Counter);
+      }
+    });
+  </script>
+
+
+
+  
+
+</body>
+</html>
